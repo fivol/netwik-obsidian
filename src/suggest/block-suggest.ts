@@ -35,7 +35,13 @@ export default class BlockSuggest extends CodeMirrorSuggest<SuggestionItem> {
     }
 
     async getSuggestions(inputStr: string): Promise<SuggestionItem[]> {
-        return await this.api.getSuggestions(inputStr)
+        return [
+            {
+                'title': 'ABC',
+                '_id': 'sdf'
+            }
+        ]
+        // return await this.api.getSuggestions(inputStr)
     }
 
     renderSuggestion(suggestion: SuggestionItem, el: HTMLElement): void {
@@ -49,7 +55,8 @@ export default class BlockSuggest extends CodeMirrorSuggest<SuggestionItem> {
         const head = this.getStartPos();
         const anchor = this.cmEditor.getCursor();
 
-        let insertingValue = `[[${suggestion._id}|${suggestion.title}]]`;
+        // let insertingValue = `[[${suggestion._id}|${suggestion.title}]]`;
+        let insertingValue = 'asdf'
 
         this.cmEditor.replaceRange(insertingValue, head, anchor);
         this.close();

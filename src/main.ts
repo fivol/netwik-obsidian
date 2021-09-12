@@ -10,6 +10,7 @@ export default class MyPlugin extends Plugin {
 	async onload() {
 		console.log('loading plugin v2');
 		this.api = new NetwikAPI()
+		this.removeAllChangeHandlers()
 		this.setupChangeHandler()
 	}
 
@@ -33,15 +34,10 @@ export default class MyPlugin extends Plugin {
 		)
 	}
 
-	testHandler = async () => {
-		console.log('Test handler')
-	}
-
 	editorChangeHandler = async (
 		cmEditor: CodeMirror.Editor,
 		changeObj: CodeMirror.EditorChange
 	) => {
-		console.log('change')
 		return this.autosuggest?.update(cmEditor, changeObj);
 	};
 
