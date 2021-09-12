@@ -10,6 +10,9 @@ export class LocalBase {
     basePath: string
     mdAdapter: MarkdownAdapter
 
+    recentCreatedFiles = new Set()
+    creatingFileState = false
+
     constructor(api: NetwikAPI, app: App, mdAdapter: MarkdownAdapter) {
         this.app = app
         this.api = api
@@ -18,13 +21,13 @@ export class LocalBase {
         this.checkBaseFolder()
 
         app.vault.on('modify', file => {
-            if (this.isRemoteFile(file)) {
+            if (this.isControlledPath(file.path)) {
                 this.uploadFile(this.pathToId(file.path));
             }
         })
         app.vault.on('create', file => {
-            if (this.isRemoteFile(file)) {
-                this.syncFile(file.path);
+            if (this.isControlledPath(file.path) && !this.recentCreatedFiles.has(file.path) && !this.creatingFileState) {
+                this.syncCreatedFile(file);
             }
         })
     }
@@ -32,7 +35,7 @@ export class LocalBase {
     private checkBaseFolder() {
         this.app.vault.adapter.stat(this.basePath).then(
             stat => {
-                if(!stat){
+                if (!stat) {
                     this.app.vault.createFolder(this.basePath).then(
                         () => {
                             new Notice('Netwik storage created!')
@@ -47,8 +50,37 @@ export class LocalBase {
         return path.join(this.basePath, _id) + '.md';
     }
 
+    async createFile() {
+        if (this.recentCreatedFiles.size > 5) {
+            this.recentCreatedFiles.clear();
+        }
+        this.creatingFileState = true;
+        const block = await this.api.createBlock({});
+        const defaultContent = '# New note\n*Id*: ' + block._id;
+        const file = await this.app.vault.create(this.idToPath(block._id), defaultContent);
+        this.recentCreatedFiles.add(file.path)
+
+        await this.app.workspace.activeLeaf.openFile(file);
+        this.creatingFileState = false;
+    }
+
+    syncCreatedFile(file: TAbstractFile) {
+        this.api.createBlock(
+            {title: this.pathToId(file.path)}
+        ).then(
+            response => {
+                this.app.vault.rename(file, this.idToPath(response._id)).then(
+                    () => {
+                        new Notice('New file uploaded!')
+
+                    }
+                )
+            }
+        )
+    }
+
     private pathToId(path: string) {
-        const match = path.match('(\w)+.md')
+        const match = path.match(/(\w+)\.md/)
         if (!match) {
             return undefined;
         }
@@ -69,8 +101,12 @@ export class LocalBase {
     }
 
     private isRemoteFile(file: TAbstractFile) {
+        return this.isControlledPath(file.path);
+    }
+
+    public isControlledPath = (path: string) => {
         const pathPrefix = this.basePath + '/';
-        return file.path.includes(pathPrefix);
+        return path.includes(pathPrefix)
     }
 
     private updateFile(_id: string) {
@@ -99,12 +135,19 @@ export class LocalBase {
     uploadFile(_id: string) {
         // Rewrite remote by local changes
 
+        const uploadBlock = (data: string) => {
+            const block = this.mdAdapter.toBlock(data);
+            // @ts-ignore
+            block._id = _id;
+            const response = this.api.uploadBlock(block);
+        }
+
         // Try access current file by cache
         const activeFile = this.app.workspace.getActiveFile()
         if (this.pathToId(activeFile.path) === _id) {
             this.app.vault.cachedRead(activeFile).then(
                 data => {
-                    this.api.uploadBlock(this.mdAdapter.toBlock(data));
+                    uploadBlock(data)
                 }
             )
         } else {
@@ -112,13 +155,20 @@ export class LocalBase {
             const path = this.idToPath(_id);
             this.app.vault.adapter.read(path).then(
                 data => {
-                    this.api.uploadBlock(this.mdAdapter.toBlock(data));
+                    uploadBlock(data)
                 }
             )
         }
     }
 
-    deleteFile(_id: string) {
+    public async deleteCurrentFile() {
+        const path = this.app.workspace.getActiveFile().path;
+        const _id = this.pathToId(path)
+        this.app.vault.delete(this.app.vault.getAbstractFileByPath(path))
+        await this.deleteFile(_id);
+    }
 
+    async deleteFile(_id: string) {
+        await this.api.deleteBlock(_id)
     }
 }

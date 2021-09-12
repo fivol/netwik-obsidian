@@ -14,7 +14,10 @@
       "es5",
       "scripthost",
       "es2015"
-    ]
+    ],
+    "paths": {
+      "cache-decorator": ["node_modules/cache-decorator/lib/index.d.ts"]
+    }
   },
   "include": [
     "**/*.ts"

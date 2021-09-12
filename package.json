@@ -22,6 +22,9 @@
     "typescript": "^4.2.4"
   },
   "dependencies": {
-    "axios": "^0.21.4"
+    "async-decorators": "^0.1.5",
+    "axios": "^0.21.4",
+    "cache-decorator": "^0.1.6",
+    "lru-cache-decorator": "^1.2.0"
   }
 }

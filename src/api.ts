@@ -11,7 +11,8 @@ export class NetwikAPI {
 
     }
 
-    getSuggestions = async (query: string): Promise<SuggestionItem[]> => {
+
+    getSuggestions = (async (query: string): Promise<SuggestionItem[]> => {
         try {
             const url = `${baseURL}/suggestions/?query=${query}`
             const response = await fetch(url);
@@ -21,25 +22,40 @@ export class NetwikAPI {
             console.error('Failed to fetch suggestions with query ' + query)
             return []
         }
-    }
+    })
 
     uploadBlock = async (block: object): Promise<object> => {
         try {
             const url = `${baseURL}/block/`
-            await fetch(url, {
+            return await fetch(url, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(block)
+            });
+        } catch {
+            return {}
+        }
+    }
+
+    createBlock = async (block: object): Promise<object> => {
+        try {
+            const url = `${baseURL}/block/`
+            const response = await fetch(url, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(block)
             });
-            return {}
+            return await response.json()
         } catch {
             return {}
         }
     }
 
-    downloadBlock =  async (_id: string): Promise<object> => {
+    downloadBlock = async (_id: string): Promise<object> => {
         try {
             const url = `${baseURL}/block/?_id=${_id}`
             const response = await fetch(url);
@@ -47,6 +63,16 @@ export class NetwikAPI {
         } catch {
             return null;
         }
+    }
+
+    deleteBlock = async (_id: string) => {
+        const url = `${baseURL}/block/?_id=${_id}`
+        await fetch(
+            url,
+            {
+                method: 'DELETE'
+            }
+        )
     }
 }
 

@@ -25,19 +25,28 @@ class ModulesRenderer {
     }
 }
 
+
+
 class ModulesParser {
     text: string
 
     constructor(text: string) {
         this.text = text
     }
+    private extractMatch = (pattern: RegExp) => {
+        const match = this.text.match(pattern)
+        if(!match){
+            return undefined;
+        }
+        return match[1];
+    }
 
     title() {
-        return this.text.search(/# (^\n+)/)
+        return this.extractMatch(/# (.+)/)
     }
 
     desc() {
-        return this.text.search(/^.*\n.(^\n)/)
+        return this.extractMatch(/.*\n.(.+)/)
     }
 
     body() {
@@ -75,15 +84,17 @@ export class MarkdownAdapter {
     public toBlock(text: string): object {
         const block: object = {}
         const parser: ModulesParser = new ModulesParser(text);
-
-        for (let module in MarkdownAdapter.modules) {
+        for (const module of MarkdownAdapter.modules) {
             // @ts-ignore
             if (parser[module] !== undefined) {
                 // @ts-ignore
-                block[module] = parser[module]()
+                const moduleValue = parser[module]()
+                if(moduleValue) {
+                    // @ts-ignore
+                    block[module] = moduleValue;
+                }
             }
         }
-        console.log(block)
         return block;
     }
 }
