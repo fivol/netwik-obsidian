@@ -16,11 +16,36 @@ export class NetwikAPI {
             const url = `${baseURL}/suggestions/?query=${query}`
             const response = await fetch(url);
             const json = await response.json();
-            console.log('Success fetch suggestions')
             return json.suggestions;
         } catch {
             console.error('Failed to fetch suggestions with query ' + query)
             return []
+        }
+    }
+
+    uploadBlock = async (block: object): Promise<object> => {
+        try {
+            const url = `${baseURL}/block/`
+            await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(block)
+            });
+            return {}
+        } catch {
+            return {}
+        }
+    }
+
+    downloadBlock =  async (_id: string): Promise<object> => {
+        try {
+            const url = `${baseURL}/block/?_id=${_id}`
+            const response = await fetch(url);
+            return await response.json();
+        } catch {
+            return null;
         }
     }
 }

@@ -118,9 +118,10 @@ export default abstract class CodeMirrorSuggest<T> implements ISuggestOwner<T> {
     private async attachAtCursor() {
         const inputStr = this.getInputStr();
         const suggestions = await this.getSuggestions(inputStr);
-        this.suggest.setSuggestions(suggestions);
-
-        this.cmEditor.addWidget(this.cmEditor.getCursor(), this.suggestEl, true);
+        if(this.startPos){
+            this.suggest.setSuggestions(suggestions);
+            this.cmEditor.addWidget(this.cmEditor.getCursor(), this.suggestEl, true);
+        }
     }
 
     open(): void {
