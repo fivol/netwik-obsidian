@@ -34,10 +34,15 @@ export default class MyPlugin extends Plugin {
 		)
 	}
 
-	editorChangeHandler = (
+	testHandler = async () => {
+		console.log('Test handler')
+	}
+
+	editorChangeHandler = async (
 		cmEditor: CodeMirror.Editor,
 		changeObj: CodeMirror.EditorChange
-	): boolean => {
+	) => {
+		console.log('change')
 		return this.autosuggest?.update(cmEditor, changeObj);
 	};
 

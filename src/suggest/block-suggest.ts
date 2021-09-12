@@ -1,13 +1,9 @@
 import { App } from "obsidian";
 import type NaturalLanguageDates from "src/main";
 import CodeMirrorSuggest from "./codemirror-suggest";
-import {NetwikAPI} from "../api";
+import {NetwikAPI, SuggestionItem} from "../api";
 
-interface IBlockCompletion {
-    label: string;
-}
-
-export default class BlockSuggest extends CodeMirrorSuggest<IBlockCompletion> {
+export default class BlockSuggest extends CodeMirrorSuggest<SuggestionItem> {
     api: NetwikAPI
     constructor(app: App, api: NetwikAPI) {
         super(app, '@');
@@ -38,37 +34,22 @@ export default class BlockSuggest extends CodeMirrorSuggest<IBlockCompletion> {
         });
     }
 
-    getSuggestions(inputStr: string): IBlockCompletion[] {
-        this.api.getSuggestions(inputStr)
-        return [
-            { label: inputStr },
-            { label: 'Hello world1' },
-            { label: 'Hello world2' },
-            { label: 'Hello world2' },
-            { label: 'Hello world2' },
-            { label: 'Hello world2' },
-            { label: 'Hello world2' },
-            { label: 'Hello world2' },
-            { label: 'Hello world2' },
-            { label: 'Hello world2' },
-            { label: 'Hello world2' },
-            { label: 'Hello world2' },
-            { label: 'Hello world2' },
-        ];
+    async getSuggestions(inputStr: string): Promise<SuggestionItem[]> {
+        return await this.api.getSuggestions(inputStr)
     }
 
-    renderSuggestion(suggestion: IBlockCompletion, el: HTMLElement): void {
-        el.setText(suggestion.label);
+    renderSuggestion(suggestion: SuggestionItem, el: HTMLElement): void {
+        el.setText(suggestion.title);
     }
 
     selectSuggestion(
-        suggestion: IBlockCompletion,
+        suggestion: SuggestionItem,
         event: KeyboardEvent | MouseEvent
     ): void {
         const head = this.getStartPos();
         const anchor = this.cmEditor.getCursor();
 
-        let insertingValue = `[[${suggestion.label}]]`;
+        let insertingValue = `[[${suggestion._id}|${suggestion.title}]]`;
 
         this.cmEditor.replaceRange(insertingValue, head, anchor);
         this.close();

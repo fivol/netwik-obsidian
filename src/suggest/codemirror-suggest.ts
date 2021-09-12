@@ -69,13 +69,14 @@ export default abstract class CodeMirrorSuggest<T> implements ISuggestOwner<T> {
         createInstructionsFn(this.instructionsEl);
     }
 
-    public update(
+    public async update(
         cmEditor: CodeMirror.Editor,
         changeObj: CodeMirror.EditorChange
-    ): boolean {
+    ): Promise<boolean> {
         if (this.cmEditor !== cmEditor) {
             this.suggestEl?.detach();
         }
+        console.log('suggest')
         this.cmEditor = cmEditor;
         const cursorPos = cmEditor.getCursor();
 
@@ -85,7 +86,7 @@ export default abstract class CodeMirrorSuggest<T> implements ISuggestOwner<T> {
                 this.close();
                 return false;
             }
-            this.attachAtCursor();
+            await this.attachAtCursor();
         } else {
             if (
                 changeObj.text.length === 1 && // ignore multi-cursors
@@ -94,7 +95,7 @@ export default abstract class CodeMirrorSuggest<T> implements ISuggestOwner<T> {
             ) {
                 this.startPos = cursorPos;
                 this.open();
-                this.attachAtCursor();
+                await this.attachAtCursor();
             }
         }
 
@@ -115,9 +116,9 @@ export default abstract class CodeMirrorSuggest<T> implements ISuggestOwner<T> {
         return line.substring(this.startPos.ch, cursor.ch);
     }
 
-    private attachAtCursor() {
+    private async attachAtCursor() {
         const inputStr = this.getInputStr();
-        const suggestions = this.getSuggestions(inputStr);
+        const suggestions = await this.getSuggestions(inputStr);
         this.suggest.setSuggestions(suggestions);
 
         this.cmEditor.addWidget(this.cmEditor.getCursor(), this.suggestEl, true);
@@ -136,7 +137,7 @@ export default abstract class CodeMirrorSuggest<T> implements ISuggestOwner<T> {
         this.suggestEl.detach();
     }
 
-    abstract getSuggestions(inputStr: string): T[];
+    async getSuggestions(inputStr: string): Promise<T[]> {return []};
     abstract renderSuggestion(item: T, el: HTMLElement): void;
     abstract selectSuggestion(item: T, evt: MouseEvent | KeyboardEvent): void;
 }
