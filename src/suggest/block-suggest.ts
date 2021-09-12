@@ -1,16 +1,17 @@
 import { App } from "obsidian";
 import type NaturalLanguageDates from "src/main";
 import CodeMirrorSuggest from "./codemirror-suggest";
+import {NetwikAPI} from "../api";
 
 interface IBlockCompletion {
     label: string;
 }
 
 export default class BlockSuggest extends CodeMirrorSuggest<IBlockCompletion> {
-    plugin: NaturalLanguageDates;
-    constructor(app: App, plugin: NaturalLanguageDates) {
+    api: NetwikAPI
+    constructor(app: App, api: NetwikAPI) {
         super(app, '@');
-        this.plugin = plugin;
+        this.api = api
 
         this.updateInstructions();
     }
@@ -38,6 +39,7 @@ export default class BlockSuggest extends CodeMirrorSuggest<IBlockCompletion> {
     }
 
     getSuggestions(inputStr: string): IBlockCompletion[] {
+        this.api.getSuggestions(inputStr)
         return [
             { label: inputStr },
             { label: 'Hello world1' },

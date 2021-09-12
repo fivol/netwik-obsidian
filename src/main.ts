@@ -1,13 +1,15 @@
 import { Plugin } from 'obsidian';
 import BlockSuggest from "./suggest/block-suggest";
 import * as CodeMirror from "codemirror";
+import {NetwikAPI} from "./api";
 
 export default class MyPlugin extends Plugin {
 	private autosuggest: BlockSuggest;
+	private api: NetwikAPI;
 
 	async onload() {
 		console.log('loading plugin v2');
-
+		this.api = new NetwikAPI()
 		this.setupChangeHandler()
 	}
 
@@ -40,7 +42,7 @@ export default class MyPlugin extends Plugin {
 	};
 
 	setupChangeHandler = () => {
-		this.autosuggest = new BlockSuggest(this.app, this);
+		this.autosuggest = new BlockSuggest(this.app, this.api);
 
 		this.registerCodeMirror(cm => {
 			cm.on('change', this.editorChangeHandler)
