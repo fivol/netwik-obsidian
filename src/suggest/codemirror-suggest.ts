@@ -76,7 +76,6 @@ export default abstract class CodeMirrorSuggest<T> implements ISuggestOwner<T> {
         if (this.cmEditor !== cmEditor) {
             this.suggestEl?.detach();
         }
-        console.log('suggest')
         this.cmEditor = cmEditor;
         const cursorPos = cmEditor.getCursor();
 

@@ -29,7 +29,6 @@ export default class MyPlugin extends Plugin {
 						console.log(handler, handler)
 					}
 				)
-				console.log('cm', cm)
 			}
 		)
 	}
