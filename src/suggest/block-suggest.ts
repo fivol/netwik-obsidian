@@ -1,8 +1,5 @@
-import { App } from "obsidian";
-import type NaturalLanguageDates from "src/main";
 import CodeMirrorSuggest from "./codemirror-suggest";
-import {API, SuggestionItem} from "../api";
-import {Base} from "../base";
+import {SuggestionItem} from "../api";
 import {Context} from "../context";
 
 export default class BlockSuggest extends CodeMirrorSuggest<SuggestionItem> {
@@ -57,10 +54,10 @@ export default class BlockSuggest extends CodeMirrorSuggest<SuggestionItem> {
         this.cmEditor.replaceRange(insertingValue, head, anchor);
         this.close();
 
-        this.ctx.localBase.downloadFile(suggestion._id).then(
+        this.ctx.base.downloadFile(suggestion._id).then(
             // @ts-ignore
 
-            () => this.ctx.localBase.openFile(suggestion._id)
+            () => this.ctx.base.openFile(suggestion._id)
         )
     }
 }

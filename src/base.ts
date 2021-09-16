@@ -9,23 +9,32 @@ export class Base {
     mdBase: LocalMdBase
     jsonBase: LocalJsonBase
 
+    fileModifyHandle = (file: TFile) => {
+        // if (this.mdBase.isControlledPath(file.path) && file.path === this.ctx.app.workspace.getActiveFile().path) {
+        //     this.saveCurrentFile();
+        // }
+        console.log('Filed modified: ', file)
+    }
+
+    fileCreateHandle = (file: TFile) => {
+        // if (this.mdBase.isControlledPath(file.path)) {
+        //     this.syncFile(file);
+        // }
+    }
+
     constructor(ctx: Context) {
         this.ctx = ctx
         this.mdBase = new LocalMdBase(ctx)
         this.jsonBase = new LocalJsonBase(ctx)
 
         this.checkFileStructure()
+        ctx.app.vault.on('modify', this.fileModifyHandle);
+        ctx.app.vault.on('create', this.fileCreateHandle);
+    }
 
-        ctx.app.vault.on('modify', file => {
-            if (this.mdBase.isControlledPath(file.path) && file.path === this.ctx.app.workspace.getActiveFile().path) {
-                this.saveCurrentFile();
-            }
-        })
-        ctx.app.vault.on('create', file => {
-            if (this.mdBase.isControlledPath(file.path)) {
-                this.syncFile(file);
-            }
-        })
+    onunload() {
+        this.ctx.app.vault.off('modify', this.fileModifyHandle)
+        this.ctx.app.vault.off('create', this.fileCreateHandle)
     }
 
     public async saveCurrentFile() {
@@ -74,8 +83,8 @@ export class Base {
     }
 
     private async checkFileStructure() {
-        await this.ctx.localBase.mdBase.checkBaseFolder()
-        await this.ctx.localBase.jsonBase.checkBaseFolder()
+        await this.mdBase.checkBaseFolder()
+        await this.jsonBase.checkBaseFolder()
     }
 
     private async saveBlockLocally(block: BlockDict) {

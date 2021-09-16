@@ -11,6 +11,7 @@ export class LocalJsonBase {
     ctx: Context
 
     constructor(ctx: Context) {
+        this.ctx = ctx;
         this.basePath = 'w/.blocks'
     }
 

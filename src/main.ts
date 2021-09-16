@@ -1,10 +1,10 @@
 import {Notice, Plugin} from 'obsidian';
 import BlockSuggest from "./suggest/block-suggest";
 import * as CodeMirror from "codemirror";
+import {Context} from './context'
 import {API} from "./api";
 import {MarkdownAdapter} from "./mdAdapter";
 import {Base} from "./base";
-import {Context} from './context'
 
 export default class MyPlugin extends Plugin {
     private autosuggest: BlockSuggest;
@@ -12,12 +12,15 @@ export default class MyPlugin extends Plugin {
 
     async onload() {
         new Notice('Use netwik')
-        // this.ctx = new Context()
-        // this.ctx.api = new NetwikAPI()
-        // this.ctx.mdAdapter = new MarkdownAdapter()
-        // this.ctx.localBase = new Base(this.ctx)
+        const ctx = new Context()
+        this.ctx = ctx
+        ctx.plugin = this;
+        ctx.app = this.app;
+        ctx.api = new API()
+        ctx.mdAdapter = new MarkdownAdapter()
+        ctx.base = new Base(this.ctx)
         this.addCommands()
-        await this.dev();
+        // await this.dev();
     }
 
     async dev() {
@@ -29,7 +32,10 @@ export default class MyPlugin extends Plugin {
 
     onunload() {
         console.log('unloading plugin');
-        this.removeChangeHandler()
+        this.registerCodeMirror((cm: CodeMirror.Editor) => {
+            cm.off("change", this.editorChangeHandler);
+        });
+        this.ctx.base.onunload();
     }
 
     addCommands() {
@@ -41,15 +47,15 @@ export default class MyPlugin extends Plugin {
                 let leaf = this.app.workspace.activeLeaf;
                 console.log('View state', leaf.getViewState())
                 const path = leaf.getViewState().state.file;
-                if (!this.ctx.localBase.mdBase.isControlledPath(path)) {
-                    new Notice(`You can delete only files in "${this.ctx.localBase.mdBase.basePath}" folder by this command`);
+                if (!this.ctx.base.mdBase.isControlledPath(path)) {
+                    new Notice(`You can delete only files in "${this.ctx.base.mdBase.basePath}" folder by this command`);
                     return;
                 }
                 if (leaf.getViewState().type !== 'markdown') {
                     new Notice('Can remove only markdown files')
                     return;
                 }
-                this.ctx.localBase.deleteCurrentFile()
+                this.ctx.base.deleteCurrentFile()
             }
         });
 
@@ -57,7 +63,7 @@ export default class MyPlugin extends Plugin {
             id: 'create-page',
             name: 'Create remote page',
             callback: () => {
-                this.ctx.localBase.createFile();
+                this.ctx.base.createFile();
             }
         });
     }
@@ -90,12 +96,6 @@ export default class MyPlugin extends Plugin {
         this.registerCodeMirror(cm => {
             cm.on('change', this.editorChangeHandler)
         })
-    }
-
-    removeChangeHandler = () => {
-        this.registerCodeMirror((cm: CodeMirror.Editor) => {
-            cm.off("change", this.editorChangeHandler);
-        });
     }
 
 }
