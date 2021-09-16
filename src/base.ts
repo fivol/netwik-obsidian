@@ -10,13 +10,14 @@ export class Base {
     jsonBase: LocalJsonBase
 
     fileModifyHandle = (file: TFile) => {
-        // if (this.mdBase.isControlledPath(file.path) && file.path === this.ctx.app.workspace.getActiveFile().path) {
-        //     this.saveCurrentFile();
-        // }
+        if (this.mdBase.isControlledPath(file.path) && file.path === this.ctx.app.workspace.getActiveFile().path) {
+            this.saveCurrentFile();
+        }
         console.log('Filed modified: ', file)
     }
 
     fileCreateHandle = (file: TFile) => {
+        console.log('File created', file)
         // if (this.mdBase.isControlledPath(file.path)) {
         //     this.syncFile(file);
         // }
@@ -47,7 +48,9 @@ export class Base {
             // TODO
         }
         const block = this.ctx.mdAdapter.toBlock(text, localBlock);
-        const response = this.ctx.api.uploadBlock(block);
+        // @ts-ignore
+        const response = this.ctx.api.uploadBlock({...block, _id: _id});
+
         // TODO
     }
 
@@ -57,9 +60,10 @@ export class Base {
         await this.saveBlockLocally(block);
     }
 
-    public async createFile(): Promise<string> {
+    public async createFile(title?: string): Promise<string> {
         // Creates new file in storage and remote returns it path
-        const block: BlockDict = await this.ctx.api.createBlock({});
+        const defaultBlock = title && {title: title} || {};
+        const block: BlockDict = await this.ctx.api.createBlock(defaultBlock);
         await this.saveBlockLocally(block);
         return this.mdBase.idToPath(block._id);
     }
@@ -78,8 +82,8 @@ export class Base {
         await this.ctx.api.deleteBlock(_id)
     }
 
-    public async openFile(file: TFile) {
-        await this.ctx.app.workspace.activeLeaf.openFile(file);
+    public async openFile(_id: string) {
+        // await this.ctx.app.workspace.activeLeaf.openFile(this.ctx.app.vault.getAbstractFileByPath(_id));
     }
 
     private async checkFileStructure() {

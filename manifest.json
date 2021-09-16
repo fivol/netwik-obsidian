@@ -1,9 +1,9 @@
 {
-	"id": "obsidian-sample-plugin",
-	"name": "Sample Plugin",
+	"id": "netwik",
+	"name": "Netwik",
 	"version": "1.0.1",
-	"minAppVersion": "0.9.12",
-	"description": "This is a sample plugin for Obsidian. This plugin demonstrates some of the capabilities of the Obsidian API.",
+	"minAppVersion": "0.0.1",
+	"description": "This plugin provides access to global network of notes. Anyone can create, view or edit notes. All changes will be synchronized between all participants",
 	"author": "Obsidian",
 	"authorUrl": "https://obsidian.md/about",
 	"isDesktopOnly": false

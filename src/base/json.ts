@@ -16,7 +16,7 @@ export class LocalJsonBase {
     }
 
     async checkBaseFolder() {
-        const stat = this.ctx.app.vault.adapter.stat(this.basePath)
+        const stat = await this.ctx.app.vault.adapter.stat(this.basePath)
         if (!stat) {
             await this.ctx.app.vault.createFolder(this.basePath);
         }
@@ -30,7 +30,12 @@ export class LocalJsonBase {
         const name = data._id;
         const filePath = this.getFilePath(name);
         const dataString = JSON.stringify(data);
-        await this.ctx.app.vault.adapter.write(filePath, dataString);
+        const stat = await this.ctx.app.vault.adapter.stat(filePath);
+        if (!stat) {
+            await this.ctx.app.vault.create(filePath, dataString);
+        } else {
+            await this.ctx.app.vault.adapter.write(filePath, dataString);
+        }
     }
 
     async read(_id: string): Promise<BlockDict | null> {

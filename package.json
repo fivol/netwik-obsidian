@@ -1,7 +1,7 @@
 {
-  "name": "obsidian-sample-plugin",
+  "name": "netwik",
   "version": "0.12.0",
-  "description": "This is a sample plugin for Obsidian (https://obsidian.md)",
+  "description": "Netwik plugin for Obsidian (https://obsidian.md). Provide you access to global network of notes",
   "main": "main.js",
   "scripts": {
     "dev": "rollup --config rollup.config.js -w",

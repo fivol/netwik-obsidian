@@ -27,7 +27,7 @@ export default class BlockSuggest extends CodeMirrorSuggest<SuggestionItem> {
                         text: "Shift",
                     });
                     instruction.createSpan({
-                        text: "Keep text as alias",
+                        text: "and Enter to create note",
                     });
                 });
             });
@@ -35,7 +35,14 @@ export default class BlockSuggest extends CodeMirrorSuggest<SuggestionItem> {
     }
 
     async getSuggestions(inputStr: string): Promise<SuggestionItem[]> {
-        return await this.ctx.api.getSuggestions(inputStr)
+        const suggestions = await this.ctx.api.getSuggestions(inputStr)
+        return [
+            // {
+            //     title: inputStr,
+            //     _id: '_create'
+            // },
+            ...suggestions
+        ]
     }
 
     renderSuggestion(suggestion: SuggestionItem, el: HTMLElement): void {
@@ -46,6 +53,11 @@ export default class BlockSuggest extends CodeMirrorSuggest<SuggestionItem> {
         suggestion: SuggestionItem,
         event: KeyboardEvent | MouseEvent
     ): void {
+        if (!suggestion) {
+            // Press Shift + Enter
+            this.ctx.base.createFile(this.getInputStr());
+            return;
+        }
         const head = this.getStartPos();
         const anchor = this.cmEditor.getCursor();
 
@@ -55,8 +67,6 @@ export default class BlockSuggest extends CodeMirrorSuggest<SuggestionItem> {
         this.close();
 
         this.ctx.base.downloadFile(suggestion._id).then(
-            // @ts-ignore
-
             () => this.ctx.base.openFile(suggestion._id)
         )
     }

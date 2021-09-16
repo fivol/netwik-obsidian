@@ -82,6 +82,8 @@ export default class Suggest<T> {
         const currentValue = this.values[this.selectedItem];
         if (currentValue) {
             this.owner.selectSuggestion(currentValue, event);
+        } else if(event.shiftKey) {
+            this.owner.selectSuggestion(currentValue, event);
         }
     }
 

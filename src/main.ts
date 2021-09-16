@@ -20,6 +20,7 @@ export default class MyPlugin extends Plugin {
         ctx.mdAdapter = new MarkdownAdapter()
         ctx.base = new Base(this.ctx)
         this.addCommands()
+        this.setupChangeHandler()
         // await this.dev();
     }
 
@@ -41,8 +42,8 @@ export default class MyPlugin extends Plugin {
     addCommands() {
 
         this.addCommand({
-            id: 'delete-block',
-            name: 'Delete remote page',
+            id: 'delete-note',
+            name: 'Delete remote note',
             callback: () => {
                 let leaf = this.app.workspace.activeLeaf;
                 console.log('View state', leaf.getViewState())
@@ -60,8 +61,16 @@ export default class MyPlugin extends Plugin {
         });
 
         this.addCommand({
-            id: 'create-page',
-            name: 'Create remote page',
+            id: 'create-note',
+            name: 'Create note',
+            callback: () => {
+                this.ctx.base.createFile();
+            }
+        });
+
+        this.addCommand({
+            id: 'update-note',
+            name: 'Update note',
             callback: () => {
                 this.ctx.base.createFile();
             }
