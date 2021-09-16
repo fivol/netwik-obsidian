@@ -1,5 +1,6 @@
 import {Context} from "../context";
 import * as path from "path";
+import {BlockDict} from "../interface";
 
 
 export class LocalJsonBase {
@@ -26,14 +27,9 @@ export class LocalJsonBase {
 
     async write(data: BlockDict) {
         const name = data._id;
-        const filePath = this.getFilePath(name)
-        const stat = await this.ctx.app.vault.adapter.stat(filePath)
+        const filePath = this.getFilePath(name);
         const dataString = JSON.stringify(data);
-        if (!stat) {
-            await this.ctx.app.vault.create(filePath, dataString)
-        } else {
-            await this.ctx.app.vault.adapter.write(filePath, dataString)
-        }
+        await this.ctx.app.vault.adapter.write(filePath, dataString);
     }
 
     async read(_id: string): Promise<BlockDict | null> {
@@ -42,7 +38,7 @@ export class LocalJsonBase {
         if (!stat) {
             return null;
         } else {
-            await this.ctx.app.vault.adapter.read(filePath);
+            return JSON.parse(await this.ctx.app.vault.adapter.read(filePath));
         }
     }
 }

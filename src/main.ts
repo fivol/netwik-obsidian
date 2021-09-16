@@ -1,7 +1,7 @@
 import {Notice, Plugin} from 'obsidian';
 import BlockSuggest from "./suggest/block-suggest";
 import * as CodeMirror from "codemirror";
-import {NetwikAPI} from "./api";
+import {API} from "./api";
 import {MarkdownAdapter} from "./mdAdapter";
 import {Base} from "./base";
 import {Context} from './context'
@@ -24,7 +24,7 @@ export default class MyPlugin extends Plugin {
         // this.setupChangeHandler()
         // await this.app.vault.createFolder('abc')
         // await this.app.vault.create('file____1.md', 'empty');
-        await this.app.vault.adapter.write('hi1.md', 'hello world')
+        await this.app.vault.adapter.write('hi2.md', 'hello world')
     }
 
     onunload() {

@@ -1,7 +1,7 @@
 import { App } from "obsidian";
 import type NaturalLanguageDates from "src/main";
 import CodeMirrorSuggest from "./codemirror-suggest";
-import {NetwikAPI, SuggestionItem} from "../api";
+import {API, SuggestionItem} from "../api";
 import {Base} from "../base";
 import {Context} from "../context";
 

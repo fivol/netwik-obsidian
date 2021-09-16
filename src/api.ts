@@ -1,3 +1,5 @@
+import {BlockDict} from './interface'
+
 const baseURL = 'http://localhost:8000'
 
 export type SuggestionItem = {
@@ -6,7 +8,7 @@ export type SuggestionItem = {
 }
 
 
-export class NetwikAPI {
+export class API {
     constructor() {
 
     }
@@ -39,20 +41,16 @@ export class NetwikAPI {
         }
     }
 
-    createBlock = async (block: object): Promise<object> => {
-        try {
-            const url = `${baseURL}/block/`
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(block)
-            });
-            return await response.json()
-        } catch {
-            return {}
-        }
+    createBlock = async (block: object): Promise<BlockDict> => {
+        const url = `${baseURL}/block/`
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(block)
+        });
+        return await response.json()
     }
 
     downloadBlock = async (_id: string): Promise<BlockDict> => {

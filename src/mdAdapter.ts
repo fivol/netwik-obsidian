@@ -1,3 +1,5 @@
+import {BlockDict} from "./interface";
+
 type ModuleRendererResult = string | object;
 
 type ModuleValue = string | object;

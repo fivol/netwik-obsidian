@@ -2,6 +2,7 @@ import {TAbstractFile, TFile} from "obsidian";
 import {Context} from "./context";
 import {LocalMdBase} from "./base/md";
 import {LocalJsonBase} from "./base/json";
+import {BlockDict} from "./interface";
 
 export class Base {
     ctx: Context
@@ -44,14 +45,14 @@ export class Base {
     public async downloadFile(_id: string) {
         // Update markdown file by data from server, loads if have not locally and update otherwise
         const block: BlockDict = await this.ctx.api.downloadBlock(_id);
-        await this.jsonBase.write(block);
-        const text = this.ctx.mdAdapter.toMarkdown(block);
-        await this.mdBase.write(block._id, text);
+        await this.saveBlockLocally(block);
     }
 
     public async createFile(): Promise<string> {
         // Creates new file in storage and remote returns it path
-        return ''
+        const block: BlockDict = await this.ctx.api.createBlock({});
+        await this.saveBlockLocally(block);
+        return this.mdBase.idToPath(block._id);
     }
 
     public async syncFile(file: TAbstractFile) {
@@ -75,5 +76,11 @@ export class Base {
     private async checkFileStructure() {
         await this.ctx.localBase.mdBase.checkBaseFolder()
         await this.ctx.localBase.jsonBase.checkBaseFolder()
+    }
+
+    private async saveBlockLocally(block: BlockDict) {
+        await this.jsonBase.write(block);
+        const text = this.ctx.mdAdapter.toMarkdown(block);
+        await this.mdBase.write(block._id, text);
     }
 }
