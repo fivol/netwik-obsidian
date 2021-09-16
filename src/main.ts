@@ -3,23 +3,28 @@ import BlockSuggest from "./suggest/block-suggest";
 import * as CodeMirror from "codemirror";
 import {NetwikAPI} from "./api";
 import {MarkdownAdapter} from "./mdAdapter";
-import {LocalBase} from "./base";
+import {Base} from "./base";
+import {Context} from './context'
 
 export default class MyPlugin extends Plugin {
     private autosuggest: BlockSuggest;
-    private api: NetwikAPI;
-    private mdAdapter: MarkdownAdapter;
-    private localBase: LocalBase;
+    private ctx: Context
 
     async onload() {
-        console.log('loading plugin v2');
-
-        this.api = new NetwikAPI()
-        this.mdAdapter = new MarkdownAdapter()
-        this.localBase = new LocalBase(this.api, this.app, this.mdAdapter)
+        new Notice('Use netwik')
+        // this.ctx = new Context()
+        // this.ctx.api = new NetwikAPI()
+        // this.ctx.mdAdapter = new MarkdownAdapter()
+        // this.ctx.localBase = new Base(this.ctx)
         this.addCommands()
+        await this.dev();
+    }
 
-        this.setupChangeHandler()
+    async dev() {
+        // this.setupChangeHandler()
+        // await this.app.vault.createFolder('abc')
+        // await this.app.vault.create('file____1.md', 'empty');
+        await this.app.vault.adapter.write('hi1.md', 'hello world')
     }
 
     onunload() {
@@ -36,15 +41,15 @@ export default class MyPlugin extends Plugin {
                 let leaf = this.app.workspace.activeLeaf;
                 console.log('View state', leaf.getViewState())
                 const path = leaf.getViewState().state.file;
-                if (!this.localBase.isControlledPath(path)) {
-                    new Notice('You can delete only files in "w" folder by this command');
+                if (!this.ctx.localBase.mdBase.isControlledPath(path)) {
+                    new Notice(`You can delete only files in "${this.ctx.localBase.mdBase.basePath}" folder by this command`);
                     return;
                 }
                 if (leaf.getViewState().type !== 'markdown') {
                     new Notice('Can remove only markdown files')
                     return;
                 }
-                this.localBase.deleteCurrentFile()
+                this.ctx.localBase.deleteCurrentFile()
             }
         });
 
@@ -52,7 +57,7 @@ export default class MyPlugin extends Plugin {
             id: 'create-page',
             name: 'Create remote page',
             callback: () => {
-                this.localBase.createFile();
+                this.ctx.localBase.createFile();
             }
         });
     }
@@ -80,7 +85,7 @@ export default class MyPlugin extends Plugin {
     };
 
     setupChangeHandler = () => {
-        this.autosuggest = new BlockSuggest(this.app, this.api, this.localBase);
+        this.autosuggest = new BlockSuggest(this.ctx);
 
         this.registerCodeMirror(cm => {
             cm.on('change', this.editorChangeHandler)

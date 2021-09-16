@@ -2,16 +2,15 @@ import { App } from "obsidian";
 import type NaturalLanguageDates from "src/main";
 import CodeMirrorSuggest from "./codemirror-suggest";
 import {NetwikAPI, SuggestionItem} from "../api";
-import {LocalBase} from "../base";
+import {Base} from "../base";
+import {Context} from "../context";
 
 export default class BlockSuggest extends CodeMirrorSuggest<SuggestionItem> {
-    api: NetwikAPI
-    localBase: LocalBase
+    ctx: Context
 
-    constructor(app: App, api: NetwikAPI, localBase: LocalBase) {
-        super(app, '@');
-        this.api = api
-        this.localBase = localBase
+    constructor(ctx: Context) {
+        super(ctx.app, '@');
+        this.ctx = ctx
 
         this.updateInstructions();
     }
@@ -39,7 +38,7 @@ export default class BlockSuggest extends CodeMirrorSuggest<SuggestionItem> {
     }
 
     async getSuggestions(inputStr: string): Promise<SuggestionItem[]> {
-        return await this.api.getSuggestions(inputStr)
+        return await this.ctx.api.getSuggestions(inputStr)
     }
 
     renderSuggestion(suggestion: SuggestionItem, el: HTMLElement): void {
@@ -58,6 +57,10 @@ export default class BlockSuggest extends CodeMirrorSuggest<SuggestionItem> {
         this.cmEditor.replaceRange(insertingValue, head, anchor);
         this.close();
 
-        this.localBase.syncFile(suggestion._id)
+        this.ctx.localBase.downloadFile(suggestion._id).then(
+            // @ts-ignore
+
+            () => this.ctx.localBase.openFile(suggestion._id)
+        )
     }
 }

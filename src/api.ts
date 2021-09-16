@@ -55,7 +55,7 @@ export class NetwikAPI {
         }
     }
 
-    downloadBlock = async (_id: string): Promise<object> => {
+    downloadBlock = async (_id: string): Promise<BlockDict> => {
         try {
             const url = `${baseURL}/block/?_id=${_id}`
             const response = await fetch(url);

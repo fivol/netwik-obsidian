@@ -8,10 +8,7 @@ class ModulesRenderer {
     }
 
     title(value: ModuleValue): ModuleRendererResult {
-        if (value instanceof String) {
-            return `# ${value}`
-        }
-        return 'UNKNOWN'
+        return `# ${value}`
     }
 
     desc(value: ModuleValue): ModuleRendererResult {
@@ -69,7 +66,7 @@ export class MarkdownAdapter {
     public toMarkdown(block: object): string {
         let data = ''
         const renderer = new ModulesRenderer(block)
-        for (let module in MarkdownAdapter.modules) {
+        for (const module of MarkdownAdapter.modules) {
             // @ts-ignore
             if (block[module] !== undefined) {
                 // @ts-ignore
@@ -81,7 +78,7 @@ export class MarkdownAdapter {
         return data;
     }
 
-    public toBlock(text: string): object {
+    public toBlock(text: string, localBlock: BlockDict): object {
         const block: object = {}
         const parser: ModulesParser = new ModulesParser(text);
         for (const module of MarkdownAdapter.modules) {
