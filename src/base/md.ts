@@ -24,14 +24,6 @@ export class LocalMdBase {
         return path.join(this.basePath, _id) + '.md';
     }
 
-    pathToId(path: string) {
-        const match = path.match(/(\w+)\.md/)
-        if (!match) {
-            return undefined;
-        }
-        return match[1];
-    }
-
     async readCurrent(file: TFile): Promise<string> {
         return await this.ctx.app.vault.cachedRead(file);
     }
@@ -40,7 +32,7 @@ export class LocalMdBase {
         await this.ctx.app.vault.adapter.write(this.idToPath(_id), text);
     }
 
-    async deleteFile(path: string) {
+    async delete(path: string) {
         await this.ctx.app.vault.delete(this.ctx.app.vault.getAbstractFileByPath(path))
     }
 

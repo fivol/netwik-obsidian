@@ -91,6 +91,14 @@ export default class Netwik extends Plugin {
         });
 
         this.addCommand({
+            id: 'sync-base',
+            name: 'Sync base',
+            callback: () => {
+                this.ctx.base.syncBase();
+            }
+        });
+
+        this.addCommand({
             id: 'upload-note',
             name: 'Upload current note',
             callback: () => {
