@@ -110,7 +110,7 @@ export class Base {
         const file = this.getCurrentFile()
         const text = await this.mdBase.readCurrent(file)
         let parsedBlock: AnyObject = this.ctx.mdAdapter.toBlock(text, {})
-        parsedBlock.creation = {...parsedBlock.creation, filename: file.path}
+        parsedBlock.create = {...parsedBlock.create, filename: file.basename}
         if (!parsedBlock.title) {
             parsedBlock.title = capitalize(file.basename)
         }

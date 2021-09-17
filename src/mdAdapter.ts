@@ -1,4 +1,4 @@
-import {BlockDict} from "./interface";
+import {AnyObject, BlockDict} from "./interface";
 
 type ModuleRendererResult = string | object;
 
@@ -13,11 +13,18 @@ class ModulesRenderer {
 
     }
 
+    genMeta(aliases: string[]) {
+        if (!aliases.length) {
+            return '';
+        }
+        return `---\naliases: [${aliases.join(', ')}]\n---\n`
+    }
+
 }
 
 class ModulesParser {
     text: string
-    static regex: {[key: string]: RegExp} = {
+    static regex: { [key: string]: RegExp } = {
         title: /^# (.+)/,
         desc: /^# .+\n(.+)/
     }
@@ -60,7 +67,7 @@ export class MarkdownAdapter {
     renderer: ModulesRenderer
 
     static modules: string[] = [
-        'title', 'desc', 'body'
+        'title', 'desc', 'body', 'create'
     ]
 
     constructor() {
@@ -69,6 +76,9 @@ export class MarkdownAdapter {
     public toMarkdown(block: { [key: string]: any }): string {
         let text = ''
         const renderer = new ModulesRenderer(block)
+        if (block.create?.filename) {
+            text += renderer.genMeta([block.create.filename].filter(alias => block.title !== alias))
+        }
         if (block.title) {
             text += `# ${block.title}\n`;
         }
