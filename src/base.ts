@@ -1,19 +1,23 @@
-import {TAbstractFile, TFile} from "obsidian";
+import {Notice, TAbstractFile, TFile} from "obsidian";
 import {Context} from "./context";
 import {LocalMdBase} from "./base/md";
 import {LocalJsonBase} from "./base/json";
 import {BlockDict} from "./interface";
+import {HTTP_CODE} from "./api";
 
 export class Base {
     ctx: Context
     mdBase: LocalMdBase
     jsonBase: LocalJsonBase
 
+    ignoreModifyState: boolean
+
     fileModifyHandle = (file: TFile) => {
-        if (this.mdBase.isControlledPath(file.path) && file.path === this.ctx.app.workspace.getActiveFile().path) {
+        if (this.mdBase.isControlledPath(file.path) && file.path === this.ctx.app.workspace.getActiveFile().path
+            && !this.ignoreModifyState) {
             this.saveCurrentFile();
+            console.log('Filed modified: ', file)
         }
-        console.log('Filed modified: ', file)
     }
 
     fileCreateHandle = (file: TFile) => {
@@ -27,6 +31,7 @@ export class Base {
         this.ctx = ctx
         this.mdBase = new LocalMdBase(ctx)
         this.jsonBase = new LocalJsonBase(ctx)
+        this.ignoreModifyState = false;
 
         this.checkFileStructure()
         ctx.app.vault.on('modify', this.fileModifyHandle);
@@ -38,10 +43,15 @@ export class Base {
         this.ctx.app.vault.off('create', this.fileCreateHandle)
     }
 
+    public getCurrentFileID(): string {
+        const activeFile = this.ctx.app.workspace.getActiveFile();
+        return this.mdBase.pathToId(activeFile.path);
+    }
+
     public async saveCurrentFile() {
         // Markdown file have changed -> save it to json format and upload to server
         const activeFile = this.ctx.app.workspace.getActiveFile();
-        const _id = this.mdBase.pathToId(activeFile.path);
+        const _id = this.getCurrentFileID();
         const text = await this.mdBase.readCurrent(activeFile);
         const localBlock = await this.jsonBase.read(_id);
         if (!localBlock) {
@@ -49,23 +59,30 @@ export class Base {
         }
         const block = this.ctx.mdAdapter.toBlock(text, localBlock);
         // @ts-ignore
-        const response = this.ctx.api.uploadBlock({...block, _id: _id});
-
+        const response = await this.ctx.api.uploadBlock({...block, _id: _id});
+        await this.saveBlockLocally(response);
         // TODO
     }
 
     public async downloadFile(_id: string) {
         // Update markdown file by data from server, loads if have not locally and update otherwise
-        const block: BlockDict = await this.ctx.api.downloadBlock(_id);
-        await this.saveBlockLocally(block);
+        try {
+            const block: BlockDict = await this.ctx.api.downloadBlock(_id);
+            await this.saveBlockLocally(block);
+        } catch (e) {
+            if (e.code === HTTP_CODE.GONE) {
+                new Notice('This file was deleted from remote')
+                await this.deleteCurrentFile()
+            }
+        }
     }
 
-    public async createFile(title?: string): Promise<string> {
+    public async createFile(title?: string) {
         // Creates new file in storage and remote returns it path
-        const defaultBlock = title && {title: title} || {};
+        const defaultBlock = {title: title || 'Title'};
         const block: BlockDict = await this.ctx.api.createBlock(defaultBlock);
         await this.saveBlockLocally(block);
-        return this.mdBase.idToPath(block._id);
+        await this.openFile(block._id);
     }
 
     public async syncFile(file: TAbstractFile) {
@@ -83,7 +100,7 @@ export class Base {
     }
 
     public async openFile(_id: string) {
-        // await this.ctx.app.workspace.activeLeaf.openFile(this.ctx.app.vault.getAbstractFileByPath(_id));
+        await this.ctx.app.workspace.activeLeaf.openFile(this.fileById(_id));
     }
 
     private async checkFileStructure() {
@@ -91,9 +108,15 @@ export class Base {
         await this.jsonBase.checkBaseFolder()
     }
 
+    private fileById(_id: string) {
+        return this.ctx.app.vault.getMarkdownFiles().filter(file => this.mdBase.pathToId(file.path) === _id)[0]
+    }
+
     private async saveBlockLocally(block: BlockDict) {
         await this.jsonBase.write(block);
         const text = this.ctx.mdAdapter.toMarkdown(block);
+        this.ignoreModifyState = true;
         await this.mdBase.write(block._id, text);
+        this.ignoreModifyState = false;
     }
 }

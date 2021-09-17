@@ -11,7 +11,6 @@ export default class MyPlugin extends Plugin {
     private ctx: Context
 
     async onload() {
-        new Notice('Use netwik')
         const ctx = new Context()
         this.ctx = ctx
         ctx.plugin = this;
@@ -72,7 +71,7 @@ export default class MyPlugin extends Plugin {
             id: 'update-note',
             name: 'Update note',
             callback: () => {
-                this.ctx.base.createFile();
+                this.ctx.base.downloadFile(this.ctx.base.getCurrentFileID());
             }
         });
     }

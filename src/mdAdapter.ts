@@ -4,52 +4,54 @@ type ModuleRendererResult = string | object;
 
 type ModuleValue = string | object;
 
+interface BlockRenderLayout {
+    items: string[]
+}
+
 class ModulesRenderer {
     constructor(block: object) {
 
     }
 
-    title(value: ModuleValue): ModuleRendererResult {
-        return `# ${value}`
-    }
-
-    desc(value: ModuleValue): ModuleRendererResult {
-        return value;
-    }
-
-    body(value: ModuleValue): ModuleRendererResult {
-        return {
-            text: '*Modules did not render*\n' + value
-        }
-    }
 }
-
-
 
 class ModulesParser {
     text: string
+    static regex: {[key: string]: RegExp} = {
+        title: /^# (.+)/,
+        desc: /^# .+\n(.+)/
+    }
 
     constructor(text: string) {
         this.text = text
+
     }
+
+    private textCopy() {
+        return `${this.text}`
+    }
+
     private extractMatch = (pattern: RegExp) => {
         const match = this.text.match(pattern)
-        if(!match){
+        if (!match) {
             return undefined;
         }
         return match[1];
     }
 
     title() {
-        return this.extractMatch(/# (.+)/)
+        return this.extractMatch(ModulesParser.regex.title)
     }
 
     desc() {
-        return this.extractMatch(/.*\n.(.+)/)
+        return this.extractMatch(ModulesParser.regex.desc)
     }
 
     body() {
-        return this.text;
+        let text = this.textCopy();
+        text = text.replace(/^# .+\n.+/, '')
+        text = text.replace(/^# .+\n/, '')
+        return text;
     }
 }
 
@@ -64,20 +66,19 @@ export class MarkdownAdapter {
     constructor() {
     }
 
-
-    public toMarkdown(block: object): string {
-        let data = ''
+    public toMarkdown(block: { [key: string]: any }): string {
+        let text = ''
         const renderer = new ModulesRenderer(block)
-        for (const module of MarkdownAdapter.modules) {
-            // @ts-ignore
-            if (block[module] !== undefined) {
-                // @ts-ignore
-                const value = block[module];
-                // @ts-ignore
-                data += renderer[module](value);
-            }
+        if (block.title) {
+            text += `# ${block.title}\n`;
         }
-        return data;
+        if (block.desc) {
+            text += block.desc + '\n';
+        }
+        if (block.body) {
+            text += block.body;
+        }
+        return text
     }
 
     public toBlock(text: string, localBlock: BlockDict): object {
@@ -88,12 +89,13 @@ export class MarkdownAdapter {
             if (parser[module] !== undefined) {
                 // @ts-ignore
                 const moduleValue = parser[module]()
-                if(moduleValue) {
+                if (moduleValue) {
                     // @ts-ignore
                     block[module] = moduleValue;
                 }
             }
         }
+        console.log('Parsed block', block)
         return block;
     }
 }
