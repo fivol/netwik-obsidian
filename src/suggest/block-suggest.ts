@@ -6,7 +6,7 @@ export default class BlockSuggest extends CodeMirrorSuggest<SuggestionItem> {
     ctx: Context
 
     constructor(ctx: Context) {
-        super(ctx.app, '@');
+        super(ctx.app, ctx.settings.triggerPhrase);
         this.ctx = ctx
 
         this.updateInstructions();
@@ -49,25 +49,31 @@ export default class BlockSuggest extends CodeMirrorSuggest<SuggestionItem> {
         el.setText(suggestion.title);
     }
 
+    private insertLink(_id: string, title: string) {
+        const head = this.getStartPos();
+        const anchor = this.cmEditor.getCursor();
+
+        let insertingValue = `[[${_id}|${title}]]`;
+
+        this.cmEditor.replaceRange(insertingValue, head, anchor);
+        this.close();
+    }
+
     selectSuggestion(
         suggestion: SuggestionItem,
         event: KeyboardEvent | MouseEvent
     ): void {
-        if (!suggestion) {
+        if (suggestion) {
+            this.ctx.base.downloadFile(suggestion._id)
+            this.insertLink(suggestion._id, suggestion.title)
+        } else {
             // Press Shift + Enter
-            this.ctx.base.createFile(this.getInputStr());
-            return;
+            const title = suggestion?.title || this.getInputStr();
+            this.ctx.base.createFile({title: title}).then(
+                _id => {
+                    this.insertLink(_id, title);
+                }
+            )
         }
-        const head = this.getStartPos();
-        const anchor = this.cmEditor.getCursor();
-
-        let insertingValue = `[[${suggestion._id}|${suggestion.title}]]`;
-
-        this.cmEditor.replaceRange(insertingValue, head, anchor);
-        this.close();
-
-        this.ctx.base.downloadFile(suggestion._id).then(
-            () => this.ctx.base.openFile(suggestion._id)
-        )
     }
 }

@@ -5,10 +5,7 @@ import {Context} from './context'
 import {API} from "./api";
 import {MarkdownAdapter} from "./mdAdapter";
 import {Base} from "./base";
-
-interface PluginSettings {
-    triggerPhrase: string;
-}
+import {PluginSettings} from "./interface";
 
 const DEFAULT_SETTINGS: PluginSettings = {
     triggerPhrase: '@'
@@ -16,14 +13,13 @@ const DEFAULT_SETTINGS: PluginSettings = {
 
 export default class Netwik extends Plugin {
     private autosuggest: BlockSuggest;
-    private ctx: Context
-    settings: PluginSettings;
+    ctx: Context
 
     async onload() {
-        await this.loadSettings();
-
         const ctx = new Context()
         this.ctx = ctx
+
+        await this.loadSettings();
         ctx.plugin = this;
         ctx.app = this.app;
         ctx.api = new API()
@@ -31,31 +27,28 @@ export default class Netwik extends Plugin {
         ctx.base = new Base(this.ctx)
         this.addCommands()
         this.setupChangeHandler()
-        // await this.dev();
         this.addSettingTab(new SettingTab(this.app, this));
     }
 
     async loadSettings() {
-        this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+        this.ctx.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
     }
 
     async saveSettings() {
-        await this.saveData(this.settings);
+        await this.restart();
+        await this.saveData(this.ctx.settings);
     }
 
-    async dev() {
-        // this.setupChangeHandler()
-        // await this.app.vault.createFolder('abc')
-        // await this.app.vault.create('file____1.md', 'empty');
-        await this.app.vault.adapter.write('hi2.md', 'hello world')
-    }
-
-    onunload() {
-        console.log('unloading plugin');
+    async onunload() {
         this.registerCodeMirror((cm: CodeMirror.Editor) => {
             cm.off("change", this.editorChangeHandler);
         });
         this.ctx.base.onunload();
+    }
+
+    async restart() {
+        await this.onunload()
+        await this.onload()
     }
 
     addCommands() {
@@ -83,7 +76,9 @@ export default class Netwik extends Plugin {
             id: 'create-note',
             name: 'Create note',
             callback: () => {
-                this.ctx.base.createFile();
+                this.ctx.base.createFile({}).then(
+                    _id => this.ctx.base.openFile(_id)
+                );
             }
         });
 
@@ -92,6 +87,18 @@ export default class Netwik extends Plugin {
             name: 'Update note',
             callback: () => {
                 this.ctx.base.downloadFile(this.ctx.base.getCurrentFileID());
+            }
+        });
+
+        this.addCommand({
+            id: 'upload-note',
+            name: 'Upload current note',
+            callback: () => {
+                if(this.ctx.base.mdBase.isControlledPath(this.ctx.base.getCurrentFile().path)) {
+                    new Notice('Upload command should be used for notes in your local storage, this file already uploaded')
+                    return;
+                }
+                this.ctx.base.uploadCurrentFile();
             }
         });
     }
@@ -146,10 +153,10 @@ class SettingTab extends PluginSettingTab {
             .setName('Trigger symbol')
             .setDesc('Show suggestions after typing this')
             .addText(text => text
-                .setValue(this.plugin.settings.triggerPhrase)
+                .setValue(this.plugin.ctx.settings.triggerPhrase)
                 .setPlaceholder('"@" by default')
                 .onChange(async (value) => {
-                    this.plugin.settings.triggerPhrase = value || DEFAULT_SETTINGS.triggerPhrase;
+                    this.plugin.ctx.settings.triggerPhrase = value || DEFAULT_SETTINGS.triggerPhrase;
                     await this.plugin.saveSettings();
                 }));
     }

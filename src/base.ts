@@ -2,8 +2,9 @@ import {Notice, TAbstractFile, TFile} from "obsidian";
 import {Context} from "./context";
 import {LocalMdBase} from "./base/md";
 import {LocalJsonBase} from "./base/json";
-import {BlockDict} from "./interface";
+import {AnyObject, BlockDict} from "./interface";
 import {HTTP_CODE} from "./api";
+import {capitalize} from "./utils";
 
 export class Base {
     ctx: Context
@@ -42,8 +43,12 @@ export class Base {
     }
 
     public getCurrentFileID(): string {
-        const activeFile = this.ctx.app.workspace.getActiveFile();
+        const activeFile = this.getCurrentFile();
         return this.mdBase.pathToId(activeFile.path);
+    }
+
+    public getCurrentFile(): TFile {
+        return this.ctx.app.workspace.getActiveFile();
     }
 
     public async saveCurrentFile() {
@@ -75,12 +80,15 @@ export class Base {
         }
     }
 
-    public async createFile(title?: string) {
+    public async createFile(initBlock: { [key: string]: string }): Promise<string> {
         // Creates new file in storage and remote returns it path
-        const defaultBlock = {title: title || 'Title'};
-        const block: BlockDict = await this.ctx.api.createBlock(defaultBlock);
+        initBlock = {
+            ...Base.getDefaultBlock(),
+            ...initBlock
+        }
+        const block: BlockDict = await this.ctx.api.createBlock(initBlock);
         await this.saveBlockLocally(block);
-        await this.openFile(block._id);
+        return block._id
     }
 
     public async syncFile(file: TAbstractFile) {
@@ -97,8 +105,28 @@ export class Base {
         await this.ctx.api.deleteBlock(_id)
     }
 
+    public async uploadCurrentFile() {
+        // File should not be in the base. This method copy file and uploads to remote
+        const file = this.getCurrentFile()
+        const text = await this.mdBase.readCurrent(file)
+        let parsedBlock: AnyObject = this.ctx.mdAdapter.toBlock(text, {})
+        parsedBlock.creation = {...parsedBlock.creation, filename: file.path}
+        if (!parsedBlock.title) {
+            parsedBlock.title = capitalize(file.basename)
+        }
+        const _id = await this.createFile(parsedBlock)
+        await this.openFile(_id);
+        await this.mdBase.deleteFile(file.path)
+    }
+
     public async openFile(_id: string) {
         await this.ctx.app.workspace.activeLeaf.openFile(this.fileById(_id));
+    }
+
+    private static getDefaultBlock() {
+        return {
+            title: 'Title'
+        }
     }
 
     private async checkFileStructure() {

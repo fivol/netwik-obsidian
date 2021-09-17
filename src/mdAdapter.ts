@@ -81,7 +81,7 @@ export class MarkdownAdapter {
         return text
     }
 
-    public toBlock(text: string, localBlock: BlockDict): object {
+    public toBlock(text: string, localBlock: BlockDict | object): object {
         const block: object = {}
         const parser: ModulesParser = new ModulesParser(text);
         for (const module of MarkdownAdapter.modules) {

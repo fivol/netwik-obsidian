@@ -3,6 +3,7 @@ import {Base} from "./base";
 import {API} from "./api";
 import {App} from "obsidian";
 import MyPlugin from "./main";
+import {PluginSettings} from "./interface";
 
 
 export class Context {
@@ -11,4 +12,5 @@ export class Context {
     api: API;
     app: App
     plugin: MyPlugin
+    settings: PluginSettings
 }
