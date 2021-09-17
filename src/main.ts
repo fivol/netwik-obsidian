@@ -1,4 +1,4 @@
-import {Notice, Plugin} from 'obsidian';
+import {App, Notice, Plugin, PluginSettingTab, Setting} from 'obsidian';
 import BlockSuggest from "./suggest/block-suggest";
 import * as CodeMirror from "codemirror";
 import {Context} from './context'
@@ -6,11 +6,22 @@ import {API} from "./api";
 import {MarkdownAdapter} from "./mdAdapter";
 import {Base} from "./base";
 
-export default class MyPlugin extends Plugin {
+interface PluginSettings {
+    triggerPhrase: string;
+}
+
+const DEFAULT_SETTINGS: PluginSettings = {
+    triggerPhrase: '@'
+}
+
+export default class Netwik extends Plugin {
     private autosuggest: BlockSuggest;
     private ctx: Context
+    settings: PluginSettings;
 
     async onload() {
+        await this.loadSettings();
+
         const ctx = new Context()
         this.ctx = ctx
         ctx.plugin = this;
@@ -21,6 +32,15 @@ export default class MyPlugin extends Plugin {
         this.addCommands()
         this.setupChangeHandler()
         // await this.dev();
+        this.addSettingTab(new SettingTab(this.app, this));
+    }
+
+    async loadSettings() {
+        this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    }
+
+    async saveSettings() {
+        await this.saveData(this.settings);
     }
 
     async dev() {
@@ -106,4 +126,31 @@ export default class MyPlugin extends Plugin {
         })
     }
 
+}
+
+
+class SettingTab extends PluginSettingTab {
+    plugin: Netwik;
+
+    constructor(app: App, plugin: Netwik) {
+        super(app, plugin);
+        this.plugin = plugin;
+    }
+
+    display(): void {
+        let {containerEl} = this;
+
+        containerEl.empty();
+
+        new Setting(containerEl)
+            .setName('Trigger symbol')
+            .setDesc('Show suggestions after typing this')
+            .addText(text => text
+                .setValue(this.plugin.settings.triggerPhrase)
+                .setPlaceholder('"@" by default')
+                .onChange(async (value) => {
+                    this.plugin.settings.triggerPhrase = value || DEFAULT_SETTINGS.triggerPhrase;
+                    await this.plugin.saveSettings();
+                }));
+    }
 }

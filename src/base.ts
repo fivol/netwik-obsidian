@@ -16,12 +16,10 @@ export class Base {
         if (this.mdBase.isControlledPath(file.path) && file.path === this.ctx.app.workspace.getActiveFile().path
             && !this.ignoreModifyState) {
             this.saveCurrentFile();
-            console.log('Filed modified: ', file)
         }
     }
 
     fileCreateHandle = (file: TFile) => {
-        console.log('File created', file)
         // if (this.mdBase.isControlledPath(file.path)) {
         //     this.syncFile(file);
         // }

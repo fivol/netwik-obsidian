@@ -42,7 +42,6 @@ export class API {
             const json = await response.json();
             return json.suggestions;
         } catch {
-            console.error('Failed to fetch suggestions with query ' + query)
             return []
         }
     })
