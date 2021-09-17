@@ -35,9 +35,9 @@ export class Base {
     }
 
     fileCreateHandle = (file: TFile) => {
-        // if (this.mdBase.isControlledPath(file.path)) {
-        //     this.syncFile(file);
-        // }
+        if (this.mdBase.isControlledPath(file.path)) {
+            this.downloadFile(this.pathToId(file.path))
+        }
     }
 
     constructor(ctx: Context) {

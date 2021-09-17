@@ -53,7 +53,7 @@ export default class BlockSuggest extends CodeMirrorSuggest<SuggestionItem> {
         const head = this.getStartPos();
         const anchor = this.cmEditor.getCursor();
 
-        let insertingValue = `[[${_id}|${title}]]`;
+        let insertingValue = `[[${this.ctx.base.mdBase.idToPath(_id).split('.')[0]}|${title}]]`;
 
         this.cmEditor.replaceRange(insertingValue, head, anchor);
         this.close();

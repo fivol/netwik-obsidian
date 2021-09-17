@@ -56,8 +56,7 @@ class ModulesParser {
 
     body() {
         let text = this.textCopy();
-        text = text.replace(/^# .+\n.+\n/, '')
-        text = text.replace(/^# .+\n/, '')
+        text = text.replace(/^# .+\n?(.+)?\n?/, '')
         return text;
     }
 }
