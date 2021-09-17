@@ -5,8 +5,6 @@ import {LocalJsonBase} from "./base/json";
 import {AnyObject, BlockDict} from "./interface";
 import {HTTP_CODE} from "./api";
 import {capitalize} from "./utils";
-import json from "@rollup/plugin-json";
-import {strict as assert} from 'assert';
 
 export class Base {
     ctx: Context
@@ -15,15 +13,8 @@ export class Base {
 
     ignoreModifyState: boolean
 
-    fileModifyHandle = (file: TFile) => {
-        if (this.mdBase.isControlledPath(file.path) && file.path === this.ctx.app.workspace.getActiveFile().path
-            && !this.ignoreModifyState) {
-            this.saveCurrentFile();
-        }
-    }
-
     pathToId(path: string) {
-        const match = path.match(/(\w+)\.\w+/)
+        const match = path.match(/\/(.+)\.\w+/)
         if (!match) {
             return undefined;
         }
@@ -31,12 +22,25 @@ export class Base {
     }
 
     private async getIdsList(dir: string) {
-        return (await this.ctx.app.vault.adapter.list(dir)).files.map(path => this.pathToId(path)).filter(x => typeof x === 'string')
+        return (await this.ctx.app.vault.adapter.list(dir)).files.map(path => this.pathToId(path)).filter(x => !!x)
+    }
+
+    fileModifyHandle = (file: TFile) => {
+        if (this.mdBase.isControlledPath(file.path) && file.path === this.ctx.app.workspace.getActiveFile().path
+            && !this.ignoreModifyState) {
+            this.saveCurrentFile();
+        }
     }
 
     fileCreateHandle = (file: TFile) => {
-        if (this.mdBase.isControlledPath(file.path)) {
+        if (this.mdBase.isControlledPath(file.path) && !this.ignoreModifyState) {
             this.downloadFile(this.pathToId(file.path))
+        }
+    }
+
+    fileDeleteHandle = (file: TFile) => {
+        if(!this.ignoreModifyState){
+            this.jsonBase.delete(this.pathToId(file.path))
         }
     }
 
@@ -51,11 +55,13 @@ export class Base {
         this.checkFileStructure()
         ctx.app.vault.on('modify', this.fileModifyHandle);
         ctx.app.vault.on('create', this.fileCreateHandle);
+        ctx.app.vault.on('delete', this.fileDeleteHandle);
     }
 
     onunload() {
         this.ctx.app.vault.off('modify', this.fileModifyHandle)
         this.ctx.app.vault.off('create', this.fileCreateHandle)
+        this.ctx.app.vault.off('delete', this.fileDeleteHandle)
     }
 
     public async syncBase() {
@@ -129,7 +135,7 @@ export class Base {
         } catch (e) {
             if (e.code === HTTP_CODE.GONE) {
                 new Notice('This file was deleted from remote')
-                await this.deleteCurrentFile()
+                await this.mdBase.delete(this.mdBase.idToPath(_id))
             }
         }
     }
@@ -155,7 +161,10 @@ export class Base {
     public async deleteCurrentFile() {
         const path = this.ctx.app.workspace.getActiveFile().path;
         const _id = this.pathToId(path)
+        this.ignoreModifyState = true;
         await this.mdBase.delete(path)
+        await this.jsonBase.delete(_id)
+        this.ignoreModifyState = false
         await this.ctx.api.deleteBlock(_id)
     }
 

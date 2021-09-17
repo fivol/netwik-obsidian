@@ -1,7 +1,8 @@
 import {BlockDict} from './interface'
 import {URLSearchParams} from "url";
 
-const baseURL = 'http://localhost:8000'
+// const baseURL = 'http://localhost:8000'
+const baseURL = 'http://194.169.160.225:5050'
 
 export type SuggestionItem = {
     title: string,

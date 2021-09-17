@@ -1,4 +1,4 @@
-import {App, Notice, Plugin, PluginSettingTab, Setting} from 'obsidian';
+import {App, MarkdownPostProcessorContext, Notice, Plugin, PluginSettingTab, Setting} from 'obsidian';
 import BlockSuggest from "./suggest/block-suggest";
 import * as CodeMirror from "codemirror";
 import {Context} from './context'
@@ -15,9 +15,21 @@ export default class Netwik extends Plugin {
     private autosuggest: BlockSuggest;
     ctx: Context
 
+    markdownPostProcessor = (el: HTMLElement, ctx: MarkdownPostProcessorContext) => {
+        if (ctx.sourcePath.startsWith('w/')) {
+            const links = el.findAll('a')
+            for (let link of links) {
+                if(link.getText().startsWith('w/')){
+                    link.setText(link.getText().split('/')[1])
+                }
+            }
+        }
+    }
+
     async onload() {
         const ctx = new Context()
         this.ctx = ctx
+        this.registerMarkdownPostProcessor(this.markdownPostProcessor)
 
         await this.loadSettings();
         ctx.plugin = this;
@@ -58,7 +70,6 @@ export default class Netwik extends Plugin {
             name: 'Delete remote note',
             callback: () => {
                 let leaf = this.app.workspace.activeLeaf;
-                console.log('View state', leaf.getViewState())
                 const path = leaf.getViewState().state.file;
                 if (!this.ctx.base.mdBase.isControlledPath(path)) {
                     new Notice(`You can delete only files in "${this.ctx.base.mdBase.basePath}" folder by this command`);
@@ -102,7 +113,7 @@ export default class Netwik extends Plugin {
             id: 'upload-note',
             name: 'Upload current note',
             callback: () => {
-                if(this.ctx.base.mdBase.isControlledPath(this.ctx.base.getCurrentFile().path)) {
+                if (this.ctx.base.mdBase.isControlledPath(this.ctx.base.getCurrentFile().path)) {
                     new Notice('Upload command should be used for notes in your local storage, this file already uploaded')
                     return;
                 }
