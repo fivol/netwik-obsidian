@@ -14,6 +14,7 @@ export class Base {
     private ignoreModifyState: boolean
 
     fileModifyHandle = (file: TFile) => {
+        console.log('MODIFY')
         if (this.mdBase.isControlledPath(file.path) && file.path === this.ctx.app.workspace.getActiveFile().path
             && !this.ignoreModifyState) {
             this.saveCurrentFile();
@@ -22,7 +23,14 @@ export class Base {
 
     fileCreateHandle = (file: TFile) => {
         if (this.mdBase.isControlledPath(file.path) && !this.ignoreModifyState) {
-            // this.indexLocalFile(file.path)
+            this.indexLocalFile(file.path)
+        }
+    }
+
+    fileRenameHandle = (file: TFile, oldPath: string) => {
+        if (this.mdBase.isControlledPath(file.path) && !this.ignoreModifyState
+            && !this.mdBase.isControlledPath(oldPath)) {
+            this.indexLocalFile(file.path)
         }
     }
 
@@ -44,12 +52,24 @@ export class Base {
         ctx.app.vault.on('modify', this.fileModifyHandle);
         ctx.app.vault.on('create', this.fileCreateHandle);
         ctx.app.vault.on('delete', this.fileDeleteHandle);
+        ctx.app.vault.on('rename', this.fileRenameHandle);
     }
 
     onunload() {
         this.ctx.app.vault.off('modify', this.fileModifyHandle)
         this.ctx.app.vault.off('create', this.fileCreateHandle)
+        this.ctx.app.vault.off('rename', this.fileRenameHandle)
         this.ctx.app.vault.off('delete', this.fileDeleteHandle)
+    }
+
+    public async createBlockFromFile(name: string) {
+        let block = this.blockByName(name);
+        const text = await this.mdBase.read(name);
+        block = {
+            ...block,
+            ...this.ctx.mdAdapter.toBlock(text, {})
+        }
+        await this.createFile(block, this.mdBase.pathByName(name))
     }
 
     public async syncBase() {
@@ -59,7 +79,7 @@ export class Base {
         for (let name of mdNames) {
             const _id = this.mdBase.idByName(name);
             if (!_id) {
-                this.mdBase.delete(this.mdBase.pathByName(name));
+                this.createBlockFromFile(name)
             } else {
                 mdIds.push(_id);
             }
@@ -136,14 +156,14 @@ export class Base {
         }
     }
 
-    public async createFile(initBlock: { [key: string]: string } | BlockDict | object): Promise<BlockDict> {
+    public async createFile(initBlock: { [key: string]: string } | BlockDict | object, path?: string): Promise<BlockDict> {
         // Creates new file in storage and remote returns it path
         initBlock = {
             ...Base.getDefaultBlock(),
             ...initBlock
         }
         const block: BlockDict = await this.ctx.api.createBlock(initBlock);
-        await this.saveBlockLocally(block);
+        await this.saveBlockLocally(block, path);
         return block;
     }
 
@@ -196,10 +216,13 @@ export class Base {
         return this.ctx.app.vault.getMarkdownFiles().filter(file => this.mdBase.idByPath(file.path) === _id)[0]
     }
 
-    private async saveBlockLocally(block: BlockDict) {
+    private async saveBlockLocally(block: BlockDict, path?: string) {
         await this.jsonBase.write(block);
         const text = this.ctx.mdAdapter.toMarkdown(block);
         this.ignoreModifyState = true;
+        if (path) {
+            await this.ctx.app.vault.rename(this.ctx.app.vault.getAbstractFileByPath(path), this.mdBase.nameFromBlock(block));
+        }
         await this.mdBase.write(this.mdBase.nameFromBlock(block), text);
         this.ignoreModifyState = false;
     }
@@ -214,24 +237,14 @@ export class Base {
     private async indexLocalFile(path: string) {
         const name = this.mdBase.nameByPath(path);
         let _id = this.mdBase.idByName(name);
-        if (!_id) {
-            // We have not block locally
-            if (name.match(/[\w\d]+/)) {
-                // Filename can be block id
-                const blocks = await this.ctx.api.getBlocks([name]);
-                if (blocks.length === 1) {
-                    await this.saveBlockLocally(blocks[0]);
-                    return
-                }
+
+        if (_id) {
+            const blocks = await this.ctx.api.getBlocks([_id]);
+            if (blocks.length === 1) {
+                await this.saveBlockLocally(blocks[0], path);
+                return;
             }
-            await this.createFile(this.blockByName(name));
-        } else {
-            // Have json object of this block
-            const block = await this.jsonBase.read(_id);
-            const text = this.ctx.mdAdapter.toMarkdown(block);
-            this.ignoreModifyState = true;
-            await this.mdBase.write(this.mdBase.nameFromBlock(block), text);
-            this.ignoreModifyState = false;
         }
+        await this.createBlockFromFile(name);
     }
 }

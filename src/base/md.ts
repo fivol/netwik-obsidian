@@ -24,9 +24,10 @@ export class LocalMdBase {
     }
 
     public idByName(name: string): string {
-        const match = name.match(/(\w+)\W/)
-        if(!match) {
-            return null;
+        let match = name.match(/(\w+)\W/)
+        if (!match) {
+            match = name.match(/^(\w+)$/)
+            return match && match[1];
         }
         return match[1];
     }
@@ -69,6 +70,10 @@ export class LocalMdBase {
 
     async write(name: string, text: string) {
         await this.ctx.app.vault.adapter.write(this.pathByName(name), text);
+    }
+
+    async read(name: string): Promise<string> {
+        return await this.ctx.app.vault.adapter.read(this.pathByName(name));
     }
 
     async delete(path: string) {

@@ -133,7 +133,6 @@ export default class Netwik extends Plugin {
                 cm._handlers.change.map(
                     (handler: any) => {
                         cm.off('change', handler)
-                        console.log(handler, handler)
                     }
                 )
             }
