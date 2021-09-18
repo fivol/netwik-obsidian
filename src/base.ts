@@ -14,7 +14,6 @@ export class Base {
     private ignoreModifyState: boolean
 
     fileModifyHandle = (file: TFile) => {
-        console.log('MODIFY')
         if (this.mdBase.isControlledPath(file.path) && file.path === this.ctx.app.workspace.getActiveFile().path
             && !this.ignoreModifyState) {
             this.saveCurrentFile();
@@ -35,8 +34,8 @@ export class Base {
     }
 
     fileDeleteHandle = (file: TFile) => {
-        if (!this.ignoreModifyState) {
-            // Do nothing when deleting markdown file
+        if (this.mdBase.isControlledPath(file.path) && !this.ignoreModifyState) {
+            this.jsonBase.delete(this.mdBase.idByName(file.basename))
         }
     }
 
@@ -101,7 +100,7 @@ export class Base {
 
         mdIds.filter(_id => {
             if (!jsonIds.includes(_id)) {
-                this.mdBase.delete(this.mdBase.pathById(_id))
+                this.mdBase.delete(this.mdBase.pathByName(this.mdBase.nameById(_id)))
                 new Notice(`Note ${_id} deleted`)
                 return false;
             }
@@ -132,7 +131,7 @@ export class Base {
         // @ts-ignore
         try {
             const response = await this.ctx.api.uploadBlock({...block, _id: _id});
-            await this.saveBlockLocally(response);
+            await this.saveBlockLocally(response, activeFile.path);
         } catch (e) {
             if (e.code === HTTP_CODE.GONE) {
                 new Notice('This note was deleted in remote')
@@ -151,7 +150,7 @@ export class Base {
         } catch (e) {
             if (e.code === HTTP_CODE.GONE) {
                 new Notice('This file was deleted from remote')
-                await this.mdBase.delete(this.mdBase.pathById(_id))
+                await this.mdBase.delete(this.mdBase.pathByName(this.mdBase.nameById(_id)))
             }
         }
     }
@@ -220,10 +219,13 @@ export class Base {
         await this.jsonBase.write(block);
         const text = this.ctx.mdAdapter.toMarkdown(block);
         this.ignoreModifyState = true;
-        if (path) {
-            await this.ctx.app.vault.rename(this.ctx.app.vault.getAbstractFileByPath(path), this.mdBase.nameFromBlock(block));
+        const targetName = this.mdBase.nameFromBlock(block);
+        const targetPath = this.mdBase.pathByName(targetName);
+
+        if (path && !await this.ctx.app.vault.adapter.exists(targetPath)) {
+            await this.ctx.app.vault.rename(this.ctx.app.vault.getAbstractFileByPath(path), targetPath);
         }
-        await this.mdBase.write(this.mdBase.nameFromBlock(block), text);
+        await this.mdBase.write(targetName, text);
         this.ignoreModifyState = false;
     }
 
@@ -237,8 +239,15 @@ export class Base {
     private async indexLocalFile(path: string) {
         const name = this.mdBase.nameByPath(path);
         let _id = this.mdBase.idByName(name);
-
         if (_id) {
+            const block: BlockDict = await this.jsonBase.read(_id)
+            if (block) {
+                this.ignoreModifyState = true;
+                await this.mdBase.delete(path);
+                this.ignoreModifyState = false;
+                await this.openFile(_id);
+                return;
+            }
             const blocks = await this.ctx.api.getBlocks([_id]);
             if (blocks.length === 1) {
                 await this.saveBlockLocally(blocks[0], path);
