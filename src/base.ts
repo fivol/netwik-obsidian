@@ -39,6 +39,12 @@ export class Base {
         }
     }
 
+    fileOpenHandle = (file: TFile) => {
+        if (file && this.mdBase.isControlledPath(file.path) && !this.ignoreModifyState) {
+            this.updateMd(this.mdBase.idByName(file.basename))
+        }
+    }
+
     constructor(ctx: Context) {
         this.ctx = ctx
         this.mdBase = new LocalMdBase(ctx)
@@ -52,6 +58,8 @@ export class Base {
         ctx.app.vault.on('create', this.fileCreateHandle);
         ctx.app.vault.on('delete', this.fileDeleteHandle);
         ctx.app.vault.on('rename', this.fileRenameHandle);
+
+        this.ctx.app.workspace.on('file-open', this.fileOpenHandle)
     }
 
     onunload() {
@@ -59,6 +67,19 @@ export class Base {
         this.ctx.app.vault.off('create', this.fileCreateHandle)
         this.ctx.app.vault.off('rename', this.fileRenameHandle)
         this.ctx.app.vault.off('delete', this.fileDeleteHandle)
+    }
+
+    async updateMd(_id: string) {
+        if (this.mdBase.pathsById(_id).length == 1) {
+            const block = await this.jsonBase.read(_id);
+            if (!block) {
+                return;
+            }
+            const text = this.ctx.mdAdapter.toMarkdown(block);
+            if (!this.ignoreModifyState) {
+                await this.mdBase.write(this.mdBase.nameByPath(this.mdBase.pathById(_id)), text);
+            }
+        }
     }
 
     public async createBlockFromFile(name: string) {
@@ -100,7 +121,7 @@ export class Base {
 
         mdIds.filter(_id => {
             if (!jsonIds.includes(_id)) {
-                this.mdBase.delete(this.mdBase.pathByName(this.mdBase.nameById(_id)))
+                this.mdBase.delete(this.mdBase.pathById(_id))
                 new Notice(`Note ${_id} deleted`)
                 return false;
             }
@@ -130,8 +151,8 @@ export class Base {
         const block = this.ctx.mdAdapter.toBlock(text, localBlock);
         // @ts-ignore
         try {
-            const response = await this.ctx.api.uploadBlock({...block, _id: _id});
-            await this.saveBlockLocally(response, activeFile.path);
+            const remoteBlock = await this.ctx.api.uploadBlock({...block, _id: _id});
+            await this.jsonBase.write(remoteBlock);
         } catch (e) {
             if (e.code === HTTP_CODE.GONE) {
                 new Notice('This note was deleted in remote')
@@ -150,7 +171,7 @@ export class Base {
         } catch (e) {
             if (e.code === HTTP_CODE.GONE) {
                 new Notice('This file was deleted from remote')
-                await this.mdBase.delete(this.mdBase.pathByName(this.mdBase.nameById(_id)))
+                await this.mdBase.delete(this.mdBase.pathById(_id))
             }
         }
     }
@@ -197,7 +218,10 @@ export class Base {
     }
 
     public async openFile(_id: string) {
-        await this.ctx.app.workspace.activeLeaf.openFile(this.fileById(_id));
+        const file = this.ctx.app.vault.getMarkdownFiles().filter(file => this.mdBase.idByPath(file.path))[0]
+        if (file) {
+            await this.ctx.app.workspace.activeLeaf.openFile(file)
+        }
     }
 
     private static getDefaultBlock() {
@@ -211,17 +235,14 @@ export class Base {
         await this.jsonBase.checkBaseFolder()
     }
 
-    private fileById(_id: string) {
-        return this.ctx.app.vault.getMarkdownFiles().filter(file => this.mdBase.idByPath(file.path) === _id)[0]
-    }
 
     private async saveBlockLocally(block: BlockDict, path?: string) {
         await this.jsonBase.write(block);
         const text = this.ctx.mdAdapter.toMarkdown(block);
-        this.ignoreModifyState = true;
         const targetName = this.mdBase.nameFromBlock(block);
         const targetPath = this.mdBase.pathByName(targetName);
 
+        this.ignoreModifyState = true;
         if (path && !await this.ctx.app.vault.adapter.exists(targetPath)) {
             await this.ctx.app.vault.rename(this.ctx.app.vault.getAbstractFileByPath(path), targetPath);
         }
@@ -240,12 +261,13 @@ export class Base {
         const name = this.mdBase.nameByPath(path);
         let _id = this.mdBase.idByName(name);
         if (_id) {
-            const block: BlockDict = await this.jsonBase.read(_id)
-            if (block) {
+            const paths: string[] = this.mdBase.pathsById(_id);
+            if (paths.length > 1) {
+                const block = await this.jsonBase.read(_id);
                 this.ignoreModifyState = true;
-                await this.mdBase.delete(path);
+                await this.mdBase.delete(paths.filter(filePath => filePath != path)[0]);
                 this.ignoreModifyState = false;
-                await this.openFile(_id);
+                await this.saveBlockLocally(block, path);
                 return;
             }
             const blocks = await this.ctx.api.getBlocks([_id]);

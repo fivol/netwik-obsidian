@@ -53,10 +53,12 @@ export class LocalMdBase {
         return path.join(this.basePath, name) + '.md';
     }
 
-    public nameById(_id: string) {
-        // Only for existing md files
-        const files = this.ctx.app.vault.getMarkdownFiles().filter(file => file.basename.contains(_id));
-        return files && files[0].basename;
+    public pathById(_id: string): string {
+        return this.pathsById(_id)[0]
+    }
+
+    public pathsById(_id: string): string[] {
+        return this.ctx.app.vault.getMarkdownFiles().filter(file => this.idByPath(file.path) === _id).map(file => file.path);
     }
 
     async getNamesList(): Promise<string[]> {
