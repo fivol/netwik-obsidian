@@ -23,13 +23,22 @@ export class LocalJsonBase {
         }
     }
 
-    private pathFromId(_id: string) {
+    async getIdsList() {
+        const files = await this.ctx.app.vault.adapter.list(this.basePath);
+        return files.files.map(path => this.idByPath(path)).filter(x => !!x)
+    }
+
+    private pathById(_id: string) {
         return path.join(this.basePath, _id + '.json')
     }
 
+    private idByPath(path: string): string {
+        const match = path.match(/\/([^/]+)\.\w+/);
+        return match && match[1];
+    }
+
     async write(data: BlockDict) {
-        const name = data._id;
-        const filePath = this.pathFromId(name);
+        const filePath = this.pathById(data._id);
         const dataString = JSON.stringify(data);
         const stat = await this.ctx.app.vault.adapter.stat(filePath);
         if (!stat) {
@@ -40,7 +49,7 @@ export class LocalJsonBase {
     }
 
     async read(_id: string): Promise<BlockDict | null> {
-        const filePath = this.pathFromId(_id)
+        const filePath = this.pathById(_id)
         const stat = await this.ctx.app.vault.adapter.stat(filePath)
         if (!stat) {
             return null;
@@ -50,7 +59,7 @@ export class LocalJsonBase {
     }
 
     async delete(_id: string) {
-        const path = this.pathFromId(_id);
+        const path = this.pathById(_id);
         await this.ctx.app.vault.adapter.remove(path)
     }
 }

@@ -19,8 +19,11 @@ export default class Netwik extends Plugin {
         if (ctx.sourcePath.startsWith('w/')) {
             const links = el.findAll('a')
             for (let link of links) {
-                if(link.getText().startsWith('w/')){
-                    link.setText(link.getText().split('/')[1])
+                if (link.getText().startsWith('w/')) {
+                    const match = link.getText().match(/\/\w+\W(.+)/)
+                    if (match) {
+                        link.setText(match[1]);
+                    }
                 }
             }
         }
@@ -88,7 +91,7 @@ export default class Netwik extends Plugin {
             name: 'Create note',
             callback: () => {
                 this.ctx.base.createFile({}).then(
-                    _id => this.ctx.base.openFile(_id)
+                    block => this.ctx.base.openFile(block._id)
                 );
             }
         });

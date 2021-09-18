@@ -2,6 +2,7 @@ type ObjectAlias = object;
 
 export interface BlockDict extends ObjectAlias{
     _id: string
+    [x: string]: any
 }
 
 export interface PluginSettings {

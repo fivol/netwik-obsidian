@@ -1,6 +1,7 @@
 import CodeMirrorSuggest from "./codemirror-suggest";
 import {SuggestionItem} from "../api";
 import {Context} from "../context";
+import {BlockDict} from "../interface";
 
 export default class BlockSuggest extends CodeMirrorSuggest<SuggestionItem> {
     ctx: Context
@@ -49,14 +50,19 @@ export default class BlockSuggest extends CodeMirrorSuggest<SuggestionItem> {
         el.setText(suggestion.title);
     }
 
-    private insertLink(_id: string, title: string) {
+    private insertLink(path: string) {
         const head = this.getStartPos();
         const anchor = this.cmEditor.getCursor();
 
-        let insertingValue = `[[${this.ctx.base.mdBase.idToPath(_id).split('.')[0]}|${title}]]`;
+        let insertingValue = `[[${path}]]`;
 
         this.cmEditor.replaceRange(insertingValue, head, anchor);
         this.close();
+    }
+
+    private pathFromBlock(block: BlockDict | SuggestionItem) {
+        const name = this.ctx.base.mdBase.nameFromBlock(block);
+        return this.ctx.base.mdBase.pathByName(name).match('(.+)\.md')[1];
     }
 
     selectSuggestion(
@@ -65,13 +71,13 @@ export default class BlockSuggest extends CodeMirrorSuggest<SuggestionItem> {
     ): void {
         if (suggestion) {
             this.ctx.base.downloadFile(suggestion._id)
-            this.insertLink(suggestion._id, suggestion.title)
+            this.insertLink(this.pathFromBlock(suggestion))
         } else {
             // Press Shift + Enter
             const title = suggestion?.title || this.getInputStr();
             this.ctx.base.createFile({title: title}).then(
-                _id => {
-                    this.insertLink(_id, title);
+                block => {
+                    this.insertLink(this.pathFromBlock(block));
                 }
             )
         }
