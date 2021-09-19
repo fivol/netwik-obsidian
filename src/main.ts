@@ -1,4 +1,12 @@
-import {App, MarkdownPostProcessorContext, Notice, Plugin, PluginSettingTab, Setting} from 'obsidian';
+import {
+    App,
+    MarkdownPostProcessorContext,
+    Notice,
+    ObsidianProtocolData,
+    Plugin,
+    PluginSettingTab,
+    Setting
+} from 'obsidian';
 import BlockSuggest from "./suggest/block-suggest";
 import * as CodeMirror from "codemirror";
 import {Context} from './context'
@@ -30,10 +38,22 @@ export default class Netwik extends Plugin {
         }
     }
 
+    protocolOpenHandler = (params: ObsidianProtocolData) => {
+        if (params.id) {
+            const _id = params.id;
+            this.ctx.base.downloadFile(_id).then(
+                () => {
+                    this.ctx.base.openFile(_id)
+                }
+            )
+        }
+    }
+
     async onload() {
         const ctx = new Context()
         this.ctx = ctx
         this.registerMarkdownPostProcessor(this.markdownPostProcessor)
+        this.registerObsidianProtocolHandler('netwik', this.protocolOpenHandler)
 
         await this.loadSettings();
         ctx.plugin = this;
@@ -110,6 +130,20 @@ export default class Netwik extends Plugin {
             name: 'Sync base',
             callback: () => {
                 this.ctx.base.syncBase();
+            }
+        });
+
+        this.addCommand({
+            id: 'copy-url',
+            name: 'Copy obsidian url',
+            callback: () => {
+                const file = this.app.workspace.getActiveFile();
+                if (this.ctx.base.mdBase.isControlledPath(file.path)) {
+                    const _id = this.ctx.base.mdBase.idByPath(file.path);
+                    const url = `obsidian://netwik?id=${_id}`;
+                    navigator.clipboard.writeText(url)
+                    new Notice('URL copied')
+                }
             }
         });
 

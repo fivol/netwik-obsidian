@@ -20,6 +20,8 @@ All changes will be synchronized between all participants.
 If you just delete file in your filesystem, nothing will happen in the cloud
 - `Sync base` Synchronize the local database with the cloud
 - `Upload current note` Upload current note (if it is not synchronized yet)
+- `Copy obsidian url` Copy to clipboard url like `obsidian://netwik?id=<note id>`.
+Anyone with this plugin can pass such link to open note, even it do not downloaded yet
 
 ### Suggestions
 1. Type your trigger symbol (`/` by default) to open suggestions of remote notes
@@ -74,3 +76,5 @@ But in Preview mode, renders only note title for convenience
 - Internal links renaming. Change title to rename files and other base internal links
 - Blocks query language in markdown files.
   You write query like code block -> plugin renders corresponding list of notes
+- Resolve obsidian-url. 
+Open any link of type `obsidian://` in obsidian and load note if not exists

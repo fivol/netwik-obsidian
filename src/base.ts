@@ -207,7 +207,7 @@ export class Base {
     }
 
     public async openFile(_id: string) {
-        const file = this.ctx.app.vault.getMarkdownFiles().filter(file => this.mdBase.idByPath(file.path))[0]
+        const file = this.ctx.app.vault.getMarkdownFiles().filter(file => this.mdBase.idByPath(file.path) === _id)[0]
         if (file) {
             await this.ctx.app.workspace.activeLeaf.openFile(file)
         }
