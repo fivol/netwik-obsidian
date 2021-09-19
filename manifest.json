@@ -1,10 +1,10 @@
 {
 	"id": "netwik",
 	"name": "Netwik",
-	"version": "1.0.1",
+	"version": "1.0.0",
 	"minAppVersion": "0.0.1",
 	"description": "This plugin provides access to global network of notes. Anyone can create, view or edit notes. All changes will be synchronized between all participants",
-	"author": "Obsidian",
-	"authorUrl": "https://obsidian.md/about",
-	"isDesktopOnly": false
+	"author": "Boris Bondarenko",
+	"authorUrl": "https://github.com/fivol",
+	"isDesktopOnly": true
 }
