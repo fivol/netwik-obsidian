@@ -32,12 +32,13 @@ If you just delete file in your filesystem, nothing will happen in the cloud
 - You can move (by mouse drag or file rename) any file in your obsidian vault to `w` folder. 
 This file will be parsed and uploaded. Locally it will be renamed to normal note (id in begin of filename)
 - In any local note call command `Upload current note` to move it to remote storage and `w` folder
+- If you click to internal link, that has not be loaded yet, obsidian will create file and plugin insert content to it
 
 ### Settings
-1. Go to the obsidian settings. `Ctrl + ','`
+1. Go to the obsidian settings. `Ctrl + ,`
 2. Open `Netwik` tab (if plugin enabled)
 
-#### Change values you want
+#### Available settings
 - `Trigger symbol`. Triggers suggestion show
 - `Backend entrypoint`. Call API on this address, change only if plugin does not work properly
 
