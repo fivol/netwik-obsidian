@@ -39,6 +39,10 @@ This file will be parsed and uploaded. Locally it will be renamed to normal note
 - If you click to internal link, that has not be loaded yet, obsidian will create file and plugin insert content to it
 - All changes saves automatically or by `Ctrl + S`
 
+### Rendering files
+- All local filenames contains its id and internal links too. 
+But in Preview mode, renders only note title for convenience
+
 ### Settings
 1. Go to the obsidian settings. `Ctrl + ,`
 2. Open `Netwik` tab (if plugin enabled)

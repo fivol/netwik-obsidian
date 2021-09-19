@@ -1,12 +1,5 @@
 import {AnyObject, BlockDict} from "./interface";
 
-type ModuleRendererResult = string | object;
-
-type ModuleValue = string | object;
-
-interface BlockRenderLayout {
-    items: string[]
-}
 
 class ModulesRenderer {
     block: BlockDict
@@ -62,7 +55,6 @@ class ModulesParser {
 
     body() {
         let text = this.textCopy();
-        text = text.replace(/# .+\n.+\n/, '')
         text = text.replace(/# .+\n/, '')
         return text;
     }
@@ -73,7 +65,7 @@ export class MarkdownAdapter {
     renderer: ModulesRenderer
 
     static modules: string[] = [
-        'title', 'desc', 'body', 'create'
+        'title', 'body', 'create'
     ]
 
     constructor() {
