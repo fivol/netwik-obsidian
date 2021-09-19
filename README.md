@@ -62,8 +62,10 @@ But in Preview mode, renders only note title for convenience
 ## Manual installation
 1. Extract the netwik folder from the zip (or clone github) to your vault's plugins folder: `<vault>/.obsidian/plugins/`  
    Note: On some machines the `.obsidian` folder may be hidden. On MacOS you should be able to press `Command+Shift+Dot` to show the folder in Finder.
-2. Reload Obsidian
-3. If prompted about Safe Mode, you can disable safe mode and enable the plugin.
+2. `npm i` or `yarn` to install dependencies in plugin folder
+3. `npm run dev` to start compilation in watch mode
+4. Reload Obsidian
+5. If prompted about Safe Mode, you can disable safe mode and enable the plugin.
 
 ## Plans
 - Add smart server side merge (not just replace with new content)
