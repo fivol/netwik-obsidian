@@ -8,7 +8,7 @@ import {Base} from "./base";
 import {PluginSettings} from "./interface";
 
 const DEFAULT_SETTINGS: PluginSettings = {
-    triggerPhrase: '@',
+    triggerPhrase: '/',
     backendEntrypoint: 'http://194.169.160.225:5050'
 }
 
