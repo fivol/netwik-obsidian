@@ -144,10 +144,7 @@ export class Base {
         const activeFile = this.ctx.app.workspace.getActiveFile();
         const _id = this.getCurrentFileID();
         const text = await this.mdBase.readCurrent(activeFile);
-        const localBlock = await this.jsonBase.read(_id);
-        if (!localBlock) {
-            // TODO
-        }
+        const localBlock = await this.jsonBase.read(_id) || {};
         const block = this.ctx.mdAdapter.toBlock(text, localBlock);
         // @ts-ignore
         try {
@@ -159,8 +156,6 @@ export class Base {
                 await this.deleteCurrentFile()
             }
         }
-
-        // TODO
     }
 
     public async downloadFile(_id: string) {
@@ -185,12 +180,6 @@ export class Base {
         const block: BlockDict = await this.ctx.api.createBlock(initBlock);
         await this.saveBlockLocally(block, path);
         return block;
-    }
-
-    public async syncFile(file: TAbstractFile) {
-        // Decides what should be done with file, may be synced with remote, deleted or renamed
-        const stat = this.ctx.app.vault.adapter.stat(file.path);
-        // TODO
     }
 
     public async deleteCurrentFile() {

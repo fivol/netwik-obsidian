@@ -7,6 +7,7 @@ export interface BlockDict extends ObjectAlias{
 
 export interface PluginSettings {
     triggerPhrase: string;
+    backendEntrypoint: string
 }
 
 export type AnyObject = {[key: string]: any}

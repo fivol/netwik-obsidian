@@ -1,8 +1,4 @@
 import {BlockDict} from './interface'
-import {URLSearchParams} from "url";
-
-// const baseURL = 'http://localhost:8000'
-const baseURL = 'http://194.169.160.225:5050'
 
 export type SuggestionItem = {
     title: string,
@@ -23,10 +19,10 @@ class APIError extends Error {
     }
 }
 
-
 export class API {
-    constructor() {
-
+    baseURL: string
+    constructor(baseURL: string) {
+        this.baseURL = baseURL
     }
 
     private static async getResponseJson(response: Response) {
@@ -39,7 +35,7 @@ export class API {
 
     public getSuggestions = (async (query: string): Promise<SuggestionItem[]> => {
         try {
-            const url = `${baseURL}/suggestions/?query=${query}`
+            const url = `${this.baseURL}/suggestions/?query=${query}`
             const response = await fetch(url);
             const json = await response.json();
             return json.suggestions;
@@ -49,7 +45,7 @@ export class API {
     })
 
     public uploadBlock = async (block: object): Promise<BlockDict> => {
-        const url = `${baseURL}/block/`
+        const url = `${this.baseURL}/block/`
         const response = await fetch(url, {
             method: 'PUT',
             headers: {
@@ -61,7 +57,7 @@ export class API {
     }
 
     public createBlock = async (block: object): Promise<BlockDict> => {
-        const url = `${baseURL}/block/`
+        const url = `${this.baseURL}/block/`
         const response = await fetch(url, {
             method: 'POST',
             headers: {
@@ -73,13 +69,13 @@ export class API {
     }
 
     public downloadBlock = async (_id: string): Promise<BlockDict> => {
-        const url = `${baseURL}/block/?_id=${_id}`
+        const url = `${this.baseURL}/block/?_id=${_id}`
         const response = await fetch(url);
         return await API.getResponseJson(response)
     }
 
     public deleteBlock = async (_id: string) => {
-        const url = `${baseURL}/block/?_id=${_id}`
+        const url = `${this.baseURL}/block/?_id=${_id}`
         await fetch(
             url,
             {
@@ -89,7 +85,7 @@ export class API {
     }
 
     public getBlocks = async (ids: string[]): Promise<BlockDict[]> => {
-        return API.getResponseJson(await fetch(`${baseURL}/blocks/?ids=${ids.join(',')}`))
+        return API.getResponseJson(await fetch(`${this.baseURL}/blocks/?ids=${ids.join(',')}`))
     }
 }
 

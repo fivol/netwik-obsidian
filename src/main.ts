@@ -8,7 +8,8 @@ import {Base} from "./base";
 import {PluginSettings} from "./interface";
 
 const DEFAULT_SETTINGS: PluginSettings = {
-    triggerPhrase: '@'
+    triggerPhrase: '@',
+    backendEntrypoint: 'http://194.169.160.225:5050'
 }
 
 export default class Netwik extends Plugin {
@@ -37,7 +38,7 @@ export default class Netwik extends Plugin {
         await this.loadSettings();
         ctx.plugin = this;
         ctx.app = this.app;
-        ctx.api = new API()
+        ctx.api = new API(this.ctx.settings.backendEntrypoint)
         ctx.mdAdapter = new MarkdownAdapter()
         ctx.base = new Base(this.ctx)
         this.addCommands()
@@ -178,6 +179,16 @@ class SettingTab extends PluginSettingTab {
                 .setPlaceholder('"@" by default')
                 .onChange(async (value) => {
                     this.plugin.ctx.settings.triggerPhrase = value || DEFAULT_SETTINGS.triggerPhrase;
+                    await this.plugin.saveSettings();
+                }));
+
+        new Setting(containerEl)
+            .setName('Backend entrypoint')
+            .setDesc('API entrypoint address')
+            .addText(text => text
+                .setValue(this.plugin.ctx.settings.backendEntrypoint)
+                .onChange(async (value) => {
+                    this.plugin.ctx.settings.backendEntrypoint = value || DEFAULT_SETTINGS.backendEntrypoint;
                     await this.plugin.saveSettings();
                 }));
     }
