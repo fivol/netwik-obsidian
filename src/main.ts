@@ -185,7 +185,7 @@ class SettingTab extends PluginSettingTab {
         new Setting(containerEl)
             .setName('Backend entrypoint')
             .setDesc('API entrypoint address')
-            .addText(text => text
+            .addTextArea(text => text
                 .setValue(this.plugin.ctx.settings.backendEntrypoint)
                 .onChange(async (value) => {
                     this.plugin.ctx.settings.backendEntrypoint = value || DEFAULT_SETTINGS.backendEntrypoint;

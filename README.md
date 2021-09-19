@@ -25,6 +25,10 @@ If you just delete file in your filesystem, nothing will happen in the cloud
 1. Type your trigger symbol (`/` by default) to open suggestions of remote notes
 2. Press `Esc` to close suggestions or choose one with keyboard arrow or mouse click
 3. Obsidian internal link will be generated and remote file will be downloaded to local storage
+#### Fast note create
+1. Type trigger symbol (`/`)
+2. Write title of your future note
+3. Press `Shift + Enter` to create it
 
 ### Files manipulation
 - If delete `.md` or `.json` files in `w` directory nothing will happen in the cloud.
@@ -33,6 +37,7 @@ If you just delete file in your filesystem, nothing will happen in the cloud
 This file will be parsed and uploaded. Locally it will be renamed to normal note (id in begin of filename)
 - In any local note call command `Upload current note` to move it to remote storage and `w` folder
 - If you click to internal link, that has not be loaded yet, obsidian will create file and plugin insert content to it
+- All changes saves automatically or by `Ctrl + S`
 
 ### Settings
 1. Go to the obsidian settings. `Ctrl + ,`
