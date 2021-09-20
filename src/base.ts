@@ -14,27 +14,27 @@ export class Base {
     private ignoreModifyState: boolean
 
     fileModifyHandle = (file: TFile) => {
-        if (this.mdBase.isControlledPath(file.path) && file.path === this.ctx.app.workspace.getActiveFile().path
+        if (file && this.mdBase.isControlledPath(file.path) && file.path === this.ctx.app.workspace.getActiveFile().path
             && !this.ignoreModifyState) {
             this.saveCurrentFile();
         }
     }
 
     fileCreateHandle = (file: TFile) => {
-        if (this.mdBase.isControlledPath(file.path) && !this.ignoreModifyState) {
+        if (file && this.mdBase.isControlledPath(file.path) && !this.ignoreModifyState) {
             this.indexLocalFile(file.path)
         }
     }
 
     fileRenameHandle = (file: TFile, oldPath: string) => {
-        if (this.mdBase.isControlledPath(file.path) && !this.ignoreModifyState
+        if (file && this.mdBase.isControlledPath(file.path) && !this.ignoreModifyState
             && !this.mdBase.isControlledPath(oldPath)) {
             this.indexLocalFile(file.path)
         }
     }
 
     fileDeleteHandle = (file: TFile) => {
-        if (this.mdBase.isControlledPath(file.path) && !this.ignoreModifyState) {
+        if (file && this.mdBase.isControlledPath(file.path) && !this.ignoreModifyState) {
             this.jsonBase.delete(this.mdBase.idByName(file.basename))
         }
     }
@@ -95,13 +95,19 @@ export class Base {
     public async syncBase() {
         // Make local base consistent with remote
         let mdNames = await this.mdBase.getNamesList();
-        let mdIds: string[] = []
+        let mdIds = new Set();
         for (let name of mdNames) {
             const _id = this.mdBase.idByName(name);
             if (!_id) {
                 this.createBlockFromFile(name)
             } else {
-                mdIds.push(_id);
+                if (mdIds.has(_id)) {
+                    this.ignoreModifyState = true
+                    await this.mdBase.delete(this.mdBase.pathByName(name))
+                    this.ignoreModifyState = false
+                } else {
+                    mdIds.add(_id);
+                }
             }
         }
         let jsonIds = await this.jsonBase.getIdsList();
@@ -112,14 +118,14 @@ export class Base {
         }
         const remoteIds = remoteBlocks.map(block => block._id);
         jsonIds = jsonIds.filter(_id => {
-            if (!remoteIds.includes(_id) || !mdIds.includes(_id)) {
+            if (!remoteIds.includes(_id) || !mdIds.has(_id)) {
                 this.jsonBase.delete(_id);
                 return false;
             }
             return true;
         })
 
-        mdIds.filter(_id => {
+        mdIds.forEach((_id: string) => {
             if (!jsonIds.includes(_id)) {
                 this.mdBase.delete(this.mdBase.pathById(_id))
                 new Notice(`Note ${_id} deleted`)
@@ -141,6 +147,9 @@ export class Base {
 
     public async saveCurrentFile() {
         // Markdown file have changed -> save it to json format and upload to server
+        if (this.ignoreModifyState) {
+            return;
+        }
         const activeFile = this.ctx.app.workspace.getActiveFile();
         const _id = this.getCurrentFileID();
         const text = await this.mdBase.readCurrent(activeFile);
