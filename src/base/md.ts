@@ -58,7 +58,9 @@ export class LocalMdBase {
     }
 
     public pathsById(_id: string): string[] {
-        return this.ctx.app.vault.getMarkdownFiles().filter(file => this.idByPath(file.path) === _id).map(file => file.path);
+        return this.ctx.app.vault.getMarkdownFiles()
+            .filter(file => this.isControlledPath(file.path) && this.idByPath(file.path) === _id)
+            .map(file => file.path);
     }
 
     async getNamesList(): Promise<string[]> {
