@@ -29,7 +29,7 @@ export class LocalJsonBase {
     }
 
     private pathById(_id: string) {
-        return path.join(this.basePath, _id + '.json')
+        return `${this.basePath}/${_id}.json`;
     }
 
     private idByPath(path: string): string {

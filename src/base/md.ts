@@ -50,7 +50,7 @@ export class LocalMdBase {
     }
 
     pathByName(name: string) {
-        return path.join(this.basePath, name) + '.md';
+        return `${this.basePath}/${name}.md`;
     }
 
     public pathById(_id: string): string {

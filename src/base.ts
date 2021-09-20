@@ -1,4 +1,4 @@
-import {Notice, TAbstractFile, TFile} from "obsidian";
+import {Notice, TFile} from "obsidian";
 import {Context} from "./context";
 import {LocalMdBase} from "./base/md";
 import {LocalJsonBase} from "./base/json";
