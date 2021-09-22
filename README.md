@@ -9,6 +9,7 @@ All changes will be synchronized between all participants.
 - Upload your notes to the cloud
 - Access any note just by passing link
 - Search global notes with auto suggestions by title
+- Resolve obsidian-url pointed on cloud note
 
 ## Usage
 *If you on macOS read `Ctrl` like `Cmd` key in this instruction*
@@ -62,9 +63,14 @@ But in Preview mode, renders only note title for convenience
   Each `.json` corresponds single `.md` file
 
 ## Manual installation
-1. Extract the netwik folder from the zip (or clone github) to your vault's plugins folder: `<vault>/.obsidian/plugins/`  
+1. Download `main.js` and `manifest.json` from [Latest release](https://github.com/fivol/netwik-obsidian/releases)
+2. Create folders and copy files to `<your vault>/.obsidian/plugins/netwik`
+3. Reload obsidian -> disable Save Mode if asked -> enable Netwik plugin in Settings -> Community Plugins
+
+## Dev installation
+1. Extract the netwik folder from the zip (or clone github) to your vault's plugins folder: `<vault>/.obsidian/plugins/netwik`  
    Note: On some machines the `.obsidian` folder may be hidden. On MacOS you should be able to press `Command+Shift+Dot` to show the folder in Finder.
-2. `npm i` or `yarn` to install dependencies in plugin folder
+2. `npm i` or `yarn` to install dependencies in `netwik` folder
 3. `npm run dev` to start compilation in watch mode
 4. Reload Obsidian
 5. If prompted about Safe Mode, you can disable safe mode and enable the plugin.
@@ -76,5 +82,4 @@ But in Preview mode, renders only note title for convenience
 - Internal links renaming. Change title to rename files and other base internal links
 - Blocks query language in markdown files.
   You write query like code block -> plugin renders corresponding list of notes
-- Resolve obsidian-url. 
-Open any link of type `obsidian://` in obsidian and load note if not exists
+- Global search by Quick Switcher. Press `Ctrl + O` and type any note title
