@@ -82,4 +82,8 @@ But in Preview mode, renders only note title for convenience
 - Internal links renaming. Change title to rename files and other base internal links
 - Blocks query language in markdown files.
   You write query like code block -> plugin renders corresponding list of notes
-- Global search by Quick Switcher. Press `Ctrl + O` and type any note title
+- Global search like Quick Switcher. Press `Ctrl + O` and type any note title
+
+## About developing
+- Make Github issue if you find a mistake or have cool feature idea
+- If you are interested in a project and want to participate in the development or promotion, contact [telegram](https://t.me/fiobond)
