@@ -17,7 +17,7 @@ import {PluginSettings} from "./interface";
 
 const DEFAULT_SETTINGS: PluginSettings = {
     triggerPhrase: '/',
-    backendEntrypoint: 'http://194.169.160.225:5050'
+    backendEntrypoint: 'http://netwik.fivol.space:5050'
 }
 
 export default class Netwik extends Plugin {
