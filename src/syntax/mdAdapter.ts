@@ -1,4 +1,4 @@
-import {AnyObject, BlockDict} from "./interface";
+import {AnyObject, BlockDict} from "../interface";
 
 
 class ModulesRenderer {

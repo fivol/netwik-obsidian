@@ -11,8 +11,8 @@ import BlockSuggest from "./suggest/block-suggest";
 import * as CodeMirror from "codemirror";
 import {Context} from './context'
 import {API} from "./api";
-import {MarkdownAdapter} from "./mdAdapter";
-import {Base} from "./base";
+import {MarkdownAdapter} from "./syntax/mdAdapter";
+import {Base} from "./base/base";
 import {PluginSettings} from "./interface";
 
 const DEFAULT_SETTINGS: PluginSettings = {
@@ -50,6 +50,13 @@ export default class Netwik extends Plugin {
     }
 
     async onload() {
+        console.log(this.app)
+        let openSwitcherHotkey = null;
+        const switcherOpenCommand = this.app.commands.commands['switcher:open'];
+        openSwitcherHotkey = switcherOpenCommand.hotkeys[0]
+        switcherOpenCommand.hotkeys = []
+
+        console.log(switcherOpenCommand, openSwitcherHotkey)
         const ctx = new Context()
         this.ctx = ctx
         this.registerMarkdownPostProcessor(this.markdownPostProcessor)

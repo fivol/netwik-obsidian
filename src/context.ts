@@ -1,5 +1,5 @@
-import {MarkdownAdapter} from "./mdAdapter";
-import {Base} from "./base";
+import {MarkdownAdapter} from "./syntax/mdAdapter";
+import {Base} from "./base/base";
 import {API} from "./api";
 import {App} from "obsidian";
 import MyPlugin from "./main";

@@ -1,10 +1,10 @@
 import {Notice, TFile} from "obsidian";
-import {Context} from "./context";
-import {LocalMdBase} from "./base/md";
-import {LocalJsonBase} from "./base/json";
-import {AnyObject, BlockDict} from "./interface";
-import {HTTP_CODE} from "./api";
-import {capitalize} from "./utils";
+import {Context} from "../context";
+import {LocalMdBase} from "./md";
+import {LocalJsonBase} from "./json";
+import {AnyObject, BlockDict} from "../interface";
+import {HTTP_CODE} from "../api";
+import {capitalize} from "../utils";
 
 export class Base {
     ctx: Context
