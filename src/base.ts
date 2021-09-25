@@ -14,9 +14,6 @@ export class Base {
     blockMirror: BlockMirror
 
     fileModifyHandle = (file: TFile) => {
-        if (this.blockMirror) {
-            return;
-        }
         const activeFile = this.ctx.app.workspace.getActiveFile();
         if (file && activeFile && this.mdBase.isControlledPath(file.path) && file.path === activeFile.path
             && !this.ctx.ignoreModifyState) {
@@ -185,6 +182,9 @@ export class Base {
         // @ts-ignore
         try {
             const remoteBlock = await this.ctx.api.uploadBlock({...block, _id: _id});
+            if(this.blockMirror){
+                return;
+            }
             await this.jsonBase.write(remoteBlock);
         } catch (e) {
             if (e.code === HTTP_CODE.GONE) {

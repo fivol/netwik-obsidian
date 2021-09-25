@@ -10,11 +10,11 @@ class ModulesRenderer {
         this.block = block
     }
 
-    genMeta(meta: object) {
+    meta(meta: object) {
         if (!meta) {
             return '';
         }
-        return `---\n${yaml.dump(meta)}\n---`
+        return `---\n${yaml.dump(meta)}\n---\n`
     }
 
     link(value: AnyObject | string, options: AnyObject): string {
@@ -67,6 +67,7 @@ class ModulesParser {
     body() {
         let text = this.textCopy();
         text = text.replace(/# .+\n/, '')
+        text = text.replace(/---\n[\s\S]+\n---/, '')
         return text;
     }
 }
@@ -76,7 +77,7 @@ export class MarkdownAdapter {
     renderer: ModulesRenderer
 
     static renderableModules: string[] = [
-        'title', 'body', 'create', 'meta'
+        'title', 'body', 'meta'
     ]
 
     constructor() {
@@ -85,8 +86,8 @@ export class MarkdownAdapter {
     public toMarkdown(block: BlockDict): string {
         let text = ''
         const renderer = new ModulesRenderer(block)
-        if (block.create?.filename) {
-            text += renderer.genMeta([block.create.filename].filter(alias => block.title !== alias))
+        if (block.meta) {
+            text += renderer.meta(block.meta)
         }
         if (block.title) {
             text += `# ${block.title}\n`;
@@ -118,7 +119,6 @@ export class MarkdownAdapter {
                 }
             }
         }
-        console.log('block', block, text, localBlock)
         // @ts-ignore
         return block;
     }
