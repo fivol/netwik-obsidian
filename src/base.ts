@@ -5,13 +5,18 @@ import {LocalJsonBase} from "./base/json";
 import {AnyObject, BlockDict} from "./interface";
 import {HTTP_CODE} from "./api";
 import {capitalize} from "./utils";
+import {BlockMirror} from "./base/blockMirror";
 
 export class Base {
     ctx: Context
     mdBase: LocalMdBase
     jsonBase: LocalJsonBase
+    blockMirror: BlockMirror
 
     fileModifyHandle = (file: TFile) => {
+        if (this.blockMirror) {
+            return;
+        }
         const activeFile = this.ctx.app.workspace.getActiveFile();
         if (file && activeFile && this.mdBase.isControlledPath(file.path) && file.path === activeFile.path
             && !this.ctx.ignoreModifyState) {
@@ -39,6 +44,12 @@ export class Base {
     }
 
     fileOpenHandle = (file: TFile) => {
+        if (this.blockMirror) {
+            if(!this.blockMirror.isUsedFile(file?.path)){
+                this.exitBlockMirrorMode()
+            }
+            return;
+        }
         if (file && this.mdBase.isControlledPath(file.path) && !this.ctx.ignoreModifyState) {
             this.updateMd(this.mdBase.idByName(file.basename))
         }
@@ -54,7 +65,7 @@ export class Base {
         ctx.app.vault.on('create', this.fileCreateHandle);
         ctx.app.vault.on('delete', this.fileDeleteHandle);
         ctx.app.vault.on('rename', this.fileRenameHandle);
-        this.ctx.app.workspace.on('file-open', this.fileOpenHandle)
+        ctx.app.workspace.on('file-open', this.fileOpenHandle)
     }
 
     async onload() {
@@ -62,11 +73,19 @@ export class Base {
         await this.syncBase()
     }
 
+    async exitBlockMirrorMode() {
+        if (this.blockMirror) {
+            await this.blockMirror.exit()
+            this.blockMirror = null;
+        }
+    }
+
     onunload() {
         this.ctx.app.vault.off('modify', this.fileModifyHandle)
         this.ctx.app.vault.off('create', this.fileCreateHandle)
         this.ctx.app.vault.off('rename', this.fileRenameHandle)
         this.ctx.app.vault.off('delete', this.fileDeleteHandle)
+        this.blockMirror?.exit()
     }
 
     async updateMd(_id: string) {
@@ -85,10 +104,8 @@ export class Base {
     }
 
     public async createBlockMirror(_id: string) {
-        const folderPath = '/w/tmp';
-        await this.checkOrCreateFolder(folderPath);
-        const file = await this.mdBase.createFile(`${folderPath}/${_id}.md`, 'Hello world');
-        await this.ctx.app.workspace.activeLeaf.openFile(file);
+        this.blockMirror = new BlockMirror(this.ctx)
+        await this.blockMirror.enter(_id);
     }
 
     public async createBlockFromFile(name: string) {
@@ -103,6 +120,7 @@ export class Base {
 
     public async syncBase() {
         // Make local base consistent with remote
+        await new BlockMirror(this.ctx).deleteFolder()
         let mdNames = await this.mdBase.getNamesList();
         let mdIds = new Set();
         for (let name of mdNames) {
@@ -249,7 +267,6 @@ export class Base {
             this.ctx.ignoreModifyState = true;
             await this.ctx.app.vault.createFolder(path);
             this.ctx.ignoreModifyState = false;
-            new Notice('Netwik storage created!')
         } else if (stat.type !== 'folder') {
             new Notice(`Please, rm file ${path} and reload obsidian. Plugin will create folder at this path`)
         }

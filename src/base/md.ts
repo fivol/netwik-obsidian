@@ -100,7 +100,6 @@ export class LocalMdBase {
     }
 
     isControlledPath(path: string) {
-        const pathPrefix = this.basePath + '/';
-        return path.includes(pathPrefix) && path.includes('.md')
+        return !!path.match(new RegExp(`${this.basePath}/[^/]+\.md`))
     }
 }
