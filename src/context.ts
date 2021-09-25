@@ -13,4 +13,5 @@ export class Context {
     app: App
     plugin: MyPlugin
     settings: PluginSettings
+    ignoreModifyState: boolean
 }

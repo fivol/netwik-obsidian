@@ -17,10 +17,7 @@ export class LocalJsonBase {
     }
 
     async checkBaseFolder() {
-        const stat = await this.ctx.app.vault.adapter.stat(this.basePath)
-        if (!stat) {
-            await this.ctx.app.vault.createFolder(this.basePath);
-        }
+        await this.ctx.base.checkOrCreateFolder(this.basePath)
     }
 
     async getIdsList() {

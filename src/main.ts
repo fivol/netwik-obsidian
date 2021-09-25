@@ -61,6 +61,7 @@ export default class Netwik extends Plugin {
         ctx.api = new API(this.ctx.settings.backendEntrypoint)
         ctx.mdAdapter = new MarkdownAdapter()
         ctx.base = new Base(this.ctx)
+        await ctx.base.onload()
         this.addCommands()
         this.setupChangeHandler()
         this.addSettingTab(new SettingTab(this.app, this));
@@ -88,10 +89,9 @@ export default class Netwik extends Plugin {
     }
 
     addCommands() {
-
         this.addCommand({
-            id: 'delete-note',
-            name: 'Delete remote note',
+            id: 'netwik:delete-note',
+            name: 'Delete note globally',
             callback: () => {
                 let leaf = this.app.workspace.activeLeaf;
                 const path = leaf.getViewState().state.file;
@@ -108,7 +108,7 @@ export default class Netwik extends Plugin {
         });
 
         this.addCommand({
-            id: 'create-note',
+            id: 'netwik:create-note',
             name: 'Create note',
             callback: () => {
                 this.ctx.base.createFile({}).then(
@@ -118,15 +118,18 @@ export default class Netwik extends Plugin {
         });
 
         this.addCommand({
-            id: 'update-note',
+            id: 'netwik:update-note',
             name: 'Update note',
-            callback: () => {
+            checkCallback: (checking) => {
+                if (checking) {
+                    return this.ctx.base.mdBase.isControlledPath(this.ctx.base.getCurrentFile().path);
+                }
                 this.ctx.base.downloadFile(this.ctx.base.getCurrentFileID());
             }
         });
 
         this.addCommand({
-            id: 'sync-base',
+            id: 'netwik:sync-base',
             name: 'Sync base',
             callback: () => {
                 this.ctx.base.syncBase();
@@ -134,28 +137,39 @@ export default class Netwik extends Plugin {
         });
 
         this.addCommand({
-            id: 'copy-url',
+            id: 'netwik:copy-url',
             name: 'Copy obsidian url',
-            callback: () => {
+            checkCallback: (checking) => {
                 const file = this.app.workspace.getActiveFile();
-                if (this.ctx.base.mdBase.isControlledPath(file.path)) {
-                    const _id = this.ctx.base.mdBase.idByPath(file.path);
-                    const url = `obsidian://netwik?id=${_id}`;
-                    navigator.clipboard.writeText(url)
-                    new Notice('URL copied')
+                if (checking) {
+                    return this.ctx.base.mdBase.isControlledPath(file.path);
                 }
+                const _id = this.ctx.base.mdBase.idByPath(file.path);
+                const url = `obsidian://netwik?id=${_id}`;
+                navigator.clipboard.writeText(url)
+                new Notice('URL copied')
             }
         });
 
         this.addCommand({
-            id: 'upload-note',
+            id: 'netwik:upload-note',
             name: 'Upload current note',
-            callback: () => {
-                if (this.ctx.base.mdBase.isControlledPath(this.ctx.base.getCurrentFile().path)) {
-                    new Notice('Upload command should be used for notes in your local storage, this file already uploaded')
-                    return;
+            checkCallback: (checking) => {
+                if (checking) {
+                    return !this.ctx.base.mdBase.isControlledPath(this.ctx.base.getCurrentFile().path);
                 }
                 this.ctx.base.uploadCurrentFile();
+            }
+        });
+        this.addCommand({
+            id: 'netwik:edit-note-data',
+            name: 'Edit note object (advanced)',
+            checkCallback: (checking) => {
+                const file = this.ctx.base.getCurrentFile();
+                if (checking) {
+                    return this.ctx.base.mdBase.isControlledPath(file.path);
+                }
+                this.ctx.base.createBlockMirror(this.ctx.base.getCurrentFileID())
             }
         });
     }

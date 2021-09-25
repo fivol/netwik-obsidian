@@ -1,4 +1,5 @@
 import {AnyObject, BlockDict} from "./interface";
+import * as yaml from 'js-yaml'
 
 
 class ModulesRenderer {
@@ -8,11 +9,11 @@ class ModulesRenderer {
         this.block = block
     }
 
-    genMeta(aliases: string[]) {
-        if (!aliases.length) {
+    genMeta(meta: object) {
+        if (!meta) {
             return '';
         }
-        return `---\naliases: [${aliases.join(', ')}]\n---\n`
+        return `---\n${yaml.dump(meta)}\n---`
     }
 
     link(value: AnyObject | string, options: AnyObject): string {
@@ -53,6 +54,15 @@ class ModulesParser {
         return this.extractMatch(ModulesParser.regex.desc)
     }
 
+    meta() {
+        const match = this.text.match(/---\n([\s\S]*)\n---/)
+        if (!match) {
+            return {}
+        }
+        const text = match[1];
+        return yaml.load(text);
+    }
+
     body() {
         let text = this.textCopy();
         text = text.replace(/# .+\n/, '')
@@ -65,7 +75,7 @@ export class MarkdownAdapter {
     renderer: ModulesRenderer
 
     static modules: string[] = [
-        'title', 'body', 'create'
+        'title', 'body', 'create', 'meta'
     ]
 
     constructor() {
@@ -91,6 +101,7 @@ export class MarkdownAdapter {
     }
 
     public toBlock(text: string, localBlock: BlockDict | object): object {
+        debugger
         const block: object = {}
         const parser: ModulesParser = new ModulesParser(text, block);
         for (const module of MarkdownAdapter.modules) {
@@ -104,6 +115,7 @@ export class MarkdownAdapter {
                 }
             }
         }
+        console.log('block', block)
         return block;
     }
 }

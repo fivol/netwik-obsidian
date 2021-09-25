@@ -11,55 +11,55 @@ export class Base {
     mdBase: LocalMdBase
     jsonBase: LocalJsonBase
 
-    private ignoreModifyState: boolean
-
     fileModifyHandle = (file: TFile) => {
-        if (file && this.mdBase.isControlledPath(file.path) && file.path === this.ctx.app.workspace.getActiveFile().path
-            && !this.ignoreModifyState) {
+        const activeFile = this.ctx.app.workspace.getActiveFile();
+        if (file && activeFile && this.mdBase.isControlledPath(file.path) && file.path === activeFile.path
+            && !this.ctx.ignoreModifyState) {
             this.saveCurrentFile();
         }
     }
 
     fileCreateHandle = (file: TFile) => {
-        if (file && this.mdBase.isControlledPath(file.path) && !this.ignoreModifyState) {
+        if (file && this.mdBase.isControlledPath(file.path) && !this.ctx.ignoreModifyState) {
             this.indexLocalFile(file.path)
         }
     }
 
     fileRenameHandle = (file: TFile, oldPath: string) => {
-        if (file && this.mdBase.isControlledPath(file.path) && !this.ignoreModifyState
+        if (file && this.mdBase.isControlledPath(file.path) && !this.ctx.ignoreModifyState
             && !this.mdBase.isControlledPath(oldPath)) {
             this.indexLocalFile(file.path)
         }
     }
 
     fileDeleteHandle = (file: TFile) => {
-        if (file && this.mdBase.isControlledPath(file.path) && !this.ignoreModifyState) {
+        if (file && this.mdBase.isControlledPath(file.path) && !this.ctx.ignoreModifyState) {
             this.jsonBase.delete(this.mdBase.idByName(file.basename))
         }
     }
 
     fileOpenHandle = (file: TFile) => {
-        if (file && this.mdBase.isControlledPath(file.path) && !this.ignoreModifyState) {
+        if (file && this.mdBase.isControlledPath(file.path) && !this.ctx.ignoreModifyState) {
             this.updateMd(this.mdBase.idByName(file.basename))
         }
     }
 
     constructor(ctx: Context) {
         this.ctx = ctx
+        ctx.ignoreModifyState = false;
         this.mdBase = new LocalMdBase(ctx)
         this.jsonBase = new LocalJsonBase(ctx)
-        this.ignoreModifyState = false;
 
-        this.syncBase()
-
-        this.checkFileStructure()
         ctx.app.vault.on('modify', this.fileModifyHandle);
         ctx.app.vault.on('create', this.fileCreateHandle);
         ctx.app.vault.on('delete', this.fileDeleteHandle);
         ctx.app.vault.on('rename', this.fileRenameHandle);
-
         this.ctx.app.workspace.on('file-open', this.fileOpenHandle)
+    }
+
+    async onload() {
+        await this.checkFileStructure()
+        await this.syncBase()
     }
 
     onunload() {
@@ -76,10 +76,19 @@ export class Base {
                 return;
             }
             const text = this.ctx.mdAdapter.toMarkdown(block);
-            if (!this.ignoreModifyState) {
+            if (!this.ctx.ignoreModifyState) {
+                this.ctx.ignoreModifyState = true;
                 await this.mdBase.write(this.mdBase.nameByPath(this.mdBase.pathById(_id)), text);
+                this.ctx.ignoreModifyState = false;
             }
         }
+    }
+
+    public async createBlockMirror(_id: string) {
+        const folderPath = '/w/tmp';
+        await this.checkOrCreateFolder(folderPath);
+        const file = await this.mdBase.createFile(`${folderPath}/${_id}.md`, 'Hello world');
+        await this.ctx.app.workspace.activeLeaf.openFile(file);
     }
 
     public async createBlockFromFile(name: string) {
@@ -102,9 +111,9 @@ export class Base {
                 this.createBlockFromFile(name)
             } else {
                 if (mdIds.has(_id)) {
-                    this.ignoreModifyState = true
+                    this.ctx.ignoreModifyState = true
                     await this.mdBase.delete(this.mdBase.pathByName(name))
-                    this.ignoreModifyState = false
+                    this.ctx.ignoreModifyState = false
                 } else {
                     mdIds.add(_id);
                 }
@@ -147,7 +156,7 @@ export class Base {
 
     public async saveCurrentFile() {
         // Markdown file have changed -> save it to json format and upload to server
-        if (this.ignoreModifyState) {
+        if (this.ctx.ignoreModifyState) {
             return;
         }
         const activeFile = this.ctx.app.workspace.getActiveFile();
@@ -194,10 +203,10 @@ export class Base {
     public async deleteCurrentFile() {
         const path = this.ctx.app.workspace.getActiveFile().path;
         const _id = this.mdBase.idByPath(path)
-        this.ignoreModifyState = true;
+        this.ctx.ignoreModifyState = true;
         await this.mdBase.delete(path)
         await this.jsonBase.delete(_id)
-        this.ignoreModifyState = false
+        this.ctx.ignoreModifyState = false
         await this.ctx.api.deleteBlock(_id)
     }
 
@@ -233,6 +242,18 @@ export class Base {
         await this.jsonBase.checkBaseFolder()
     }
 
+    async checkOrCreateFolder(path: string) {
+        // If folder exists do noting, else create
+        const stat = await this.ctx.app.vault.adapter.stat(path)
+        if (!stat) {
+            this.ctx.ignoreModifyState = true;
+            await this.ctx.app.vault.createFolder(path);
+            this.ctx.ignoreModifyState = false;
+            new Notice('Netwik storage created!')
+        } else if (stat.type !== 'folder') {
+            new Notice(`Please, rm file ${path} and reload obsidian. Plugin will create folder at this path`)
+        }
+    }
 
     private async saveBlockLocally(block: BlockDict, path?: string) {
         await this.jsonBase.write(block);
@@ -240,12 +261,10 @@ export class Base {
         const targetName = this.mdBase.nameFromBlock(block);
         const targetPath = this.mdBase.pathByName(targetName);
 
-        this.ignoreModifyState = true;
         if (path && !await this.ctx.app.vault.adapter.exists(targetPath)) {
-            await this.ctx.app.vault.rename(this.ctx.app.vault.getAbstractFileByPath(path), targetPath);
+            await this.mdBase.rename(path, targetPath);
         }
         await this.mdBase.write(targetName, text);
-        this.ignoreModifyState = false;
     }
 
     private blockByName(name: string): object {
@@ -262,9 +281,9 @@ export class Base {
             const paths: string[] = this.mdBase.pathsById(_id);
             if (paths.length > 1) {
                 const block = await this.jsonBase.read(_id);
-                this.ignoreModifyState = true;
+                this.ctx.ignoreModifyState = true;
                 await this.mdBase.delete(paths.filter(filePath => filePath != path)[0]);
-                this.ignoreModifyState = false;
+                this.ctx.ignoreModifyState = false;
                 await this.saveBlockLocally(block, path);
                 return;
             }

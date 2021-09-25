@@ -1,6 +1,5 @@
 import {Context} from "../context";
 import {Notice, TFile} from "obsidian";
-import * as path from "path";
 import {BlockDict} from "../interface";
 import {SuggestionItem} from "../api";
 
@@ -16,11 +15,7 @@ export class LocalMdBase {
 
     async checkBaseFolder() {
         // If root folder does not exist, creates it.
-        const stat = this.ctx.app.vault.adapter.stat(this.basePath)
-        if (!stat) {
-            await this.ctx.app.vault.createFolder(this.basePath);
-            new Notice('Netwik storage created!')
-        }
+        await this.ctx.base.checkOrCreateFolder(this.basePath);
     }
 
     public idByName(name: string): string {
@@ -34,10 +29,7 @@ export class LocalMdBase {
 
     nameByPath(path: string): string {
         const match = path.match(/\/([^/]+)\.\w+/)
-        if (!match) {
-            return undefined;
-        }
-        return match[1];
+        return !!match && match[1];
     }
 
     nameFromBlock(block: BlockDict | SuggestionItem): string {
@@ -46,7 +38,7 @@ export class LocalMdBase {
 
     idByPath(path: string): string {
         const name = this.nameByPath(path);
-        return this.idByName(name);
+        return name && this.idByName(name);
     }
 
     pathByName(name: string) {
@@ -54,7 +46,8 @@ export class LocalMdBase {
     }
 
     public pathById(_id: string): string {
-        return this.pathsById(_id)[0]
+        const paths = this.pathsById(_id);
+        return paths && paths[0]
     }
 
     public pathsById(_id: string): string[] {
@@ -74,7 +67,26 @@ export class LocalMdBase {
     }
 
     async write(name: string, text: string) {
-        await this.ctx.app.vault.adapter.write(this.pathByName(name), text);
+        await this.writePath(this.pathByName(name), text);
+    }
+
+    async writePath(path: string, text: string) {
+        this.ctx.ignoreModifyState = true;
+        await this.ctx.app.vault.adapter.write(path, text);
+        this.ctx.ignoreModifyState = false;
+    }
+
+    async createFile(path: string, text: string) {
+        this.ctx.ignoreModifyState = true;
+        const file = await this.ctx.app.vault.create(path, text);
+        this.ctx.ignoreModifyState = false;
+        return file;
+    }
+
+    async rename(path: string, targetPath: string) {
+        this.ctx.ignoreModifyState = true;
+        await this.ctx.app.vault.rename(this.ctx.app.vault.getAbstractFileByPath(path), targetPath);
+        this.ctx.ignoreModifyState = false;
     }
 
     async read(name: string): Promise<string> {
@@ -82,7 +94,9 @@ export class LocalMdBase {
     }
 
     async delete(path: string) {
+        this.ctx.ignoreModifyState = true;
         await this.ctx.app.vault.delete(this.ctx.app.vault.getAbstractFileByPath(path))
+        this.ctx.ignoreModifyState = false;
     }
 
     isControlledPath(path: string) {
