@@ -25,14 +25,16 @@ export default class Netwik extends Plugin {
     ctx: Context
 
     markdownPostProcessor = (el: HTMLElement, ctx: MarkdownPostProcessorContext) => {
-        if (ctx.sourcePath.startsWith('w/')) {
-            const links = el.findAll('a')
-            for (let link of links) {
-                if (link.getText().startsWith('w/')) {
-                    const match = link.getText().match(/\/\w+\W(.+)/)
-                    if (match) {
-                        link.setText(match[1]);
-                    }
+        const links = el.findAll('a.internal-link')
+        for (let link of links) {
+            const linkText = link.getText();
+            if (linkText.contains('|')) {
+                continue;
+            }
+            if (this.ctx.base.mdBase.isControlledPath(`${linkText}.md`)) {
+                const match = linkText.match(/\/\w+\W(.+)/)
+                if (match) {
+                    link.setText(match[1]);
                 }
             }
         }

@@ -14,7 +14,7 @@ export class Base {
     private ignoreModifyState: boolean
 
     fileModifyHandle = (file: TFile) => {
-        if (file && this.mdBase.isControlledPath(file.path) && file.path === this.ctx.app.workspace.getActiveFile().path
+        if (file && this.mdBase.isControlledPath(file.path) && file.path === this.ctx.app.workspace.getActiveFile()?.path
             && !this.ignoreModifyState) {
             this.saveCurrentFile();
         }
