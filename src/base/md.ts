@@ -46,7 +46,7 @@ export class LocalMdBase {
 
     idByPath(path: string): string {
         const name = this.nameByPath(path);
-        return this.idByName(name);
+        return name && this.idByName(name);
     }
 
     pathByName(name: string) {
