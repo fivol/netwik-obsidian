@@ -1,5 +1,5 @@
 import {Context} from "../context";
-import {Notice, TFile} from "obsidian";
+import {normalizePath, Notice, TFile} from "obsidian";
 import * as path from "path";
 import {BlockDict} from "../interface";
 import {SuggestionItem} from "../api";
@@ -16,7 +16,7 @@ export class LocalMdBase {
 
     async checkBaseFolder() {
         // If root folder does not exist, creates it.
-        const stat = this.ctx.app.vault.adapter.stat(this.basePath)
+        const stat = this.ctx.app.vault.adapter.stat(normalizePath(this.basePath))
         if (!stat) {
             await this.ctx.app.vault.createFolder(this.basePath);
             new Notice('Netwik storage created!')
@@ -64,7 +64,7 @@ export class LocalMdBase {
     }
 
     async getNamesList(): Promise<string[]> {
-        const files = await this.ctx.app.vault.adapter.list(this.basePath);
+        const files = await this.ctx.app.vault.adapter.list(normalizePath(this.basePath));
         const mdFiles = files.files.filter(path => path.contains('.md'))
         return mdFiles.map(path => this.nameByPath(path));
     }
@@ -74,11 +74,11 @@ export class LocalMdBase {
     }
 
     async write(name: string, text: string) {
-        await this.ctx.app.vault.adapter.write(this.pathByName(name), text);
+        await this.ctx.app.vault.adapter.write(normalizePath(this.pathByName(name)), text);
     }
 
     async read(name: string): Promise<string> {
-        return await this.ctx.app.vault.adapter.read(this.pathByName(name));
+        return await this.ctx.app.vault.adapter.read(normalizePath(this.pathByName(name)));
     }
 
     async delete(path: string) {

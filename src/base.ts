@@ -1,4 +1,4 @@
-import {Notice, TFile} from "obsidian";
+import {normalizePath, Notice, TFile} from "obsidian";
 import {Context} from "./context";
 import {LocalMdBase} from "./base/md";
 import {LocalJsonBase} from "./base/json";
@@ -241,7 +241,7 @@ export class Base {
         const targetPath = this.mdBase.pathByName(targetName);
 
         this.ignoreModifyState = true;
-        if (path && !await this.ctx.app.vault.adapter.exists(targetPath)) {
+        if (path && !await this.ctx.app.vault.adapter.exists(normalizePath(targetPath))) {
             await this.ctx.app.vault.rename(this.ctx.app.vault.getAbstractFileByPath(path), targetPath);
         }
         await this.mdBase.write(targetName, text);
