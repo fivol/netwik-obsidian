@@ -83,6 +83,14 @@ export class MarkdownAdapter {
     constructor() {
     }
 
+    private renderLayout(layout: string, block: BlockDict): string {
+        layout = layout.replace(/\[(.*)]{(.*)}/g, (match, key, value) => {
+            console.log(key, value)
+            return '!!'
+        });
+        return layout;
+    }
+
     public toMarkdown(block: BlockDict): string {
         let text = ''
         const renderer = new ModulesRenderer(block)
@@ -96,7 +104,7 @@ export class MarkdownAdapter {
             text += block.desc + '\n';
         }
         if (block.body) {
-            text += block.body;
+            text += this.renderLayout(block.body, block);
         }
 
         return text
