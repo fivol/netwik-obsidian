@@ -1,7 +1,7 @@
 {
 	"id": "netwik",
 	"name": "Netwik",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"minAppVersion": "0.0.1",
 	"description": "This plugin provides access to global network of notes. Anyone can create, view or edit notes. All changes will be synchronized between all participants",
 	"author": "Boris Bondarenko",
